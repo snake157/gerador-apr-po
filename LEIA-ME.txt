@@ -1,0 +1,346 @@
+﻿GERADOR DE APR E PO - como usar
+
+SUMÁRIO
+  1. COMEÇAR
+  2. ABA APR
+  3. ABA PO
+  4. FOTOS E ANEXOS DO PO (inclui AJUSTAR FOTOS)
+  5. CONFERÊNCIA APR X PO
+  6. SALVAR E RASCUNHO AUTOMÁTICO
+  7. EXPORTAR (PDF, EXCEL, WORD)
+  8. ABRIR DOCUMENTOS ANTIGOS (WORD E EXCEL)
+  9. PICTOGRAMAS
+  10. DESFAZER / REFAZER
+  11. PASTAS
+
+==================================================================================================
+1. COMEÇAR
+==================================================================================================
+- Abra "Gerador de PO.html" com dois cliques (Edge ou Chrome). Não precisa instalar nada.
+- No alto do painel ficam as abas APR e PO. O Menu, o "Salvar" (Ctrl+S) e o "Abrir" (Ctrl+O) valem para a
+  aba aberta.
+- O painel da esquerda é o editor; a prévia à direita mostra as páginas como vão sair no PDF. Clicar num bloco
+  da prévia leva ao campo no editor.
+- A lingueta "<" na borda do painel da esquerda oculta o painel (a prévia ou a conferência ocupam a tela
+  toda); ">" mostra de novo. O gerador lembra a escolha.
+- Use o gerador em UMA aba do navegador só. Se ele já estiver aberto em outra aba, aparece um aviso: com duas
+  abertas, o rascunho automático de uma apaga o da outra.
+- Avisos e perguntas aparecem numa janela do próprio gerador, com botões que dizem o que fazem (ex.: "EXCLUIR" /
+  "CANCELAR"). Enter escolhe o botão principal; Esc cancela.
+
+==================================================================================================
+2. ABA APR
+==================================================================================================
+- A APR é um documento próprio, salvo em Excel (APR.<nº> - <atividade>_Rev<NN>.xlsx; veja o item 6).
+- Preencha o cabeçalho, as etapas e, em cada perigo: Risco (efeito / dano), EPC's, EPI's, PO e PD (o risco
+  PO × PD sai com a cor da matriz) e as Medidas de controle (uma por linha). O Método sai como PO.<nº> (pode ser
+  trocado no cabeçalho, ou por perigo no campo "Método / Instrução de Segurança" de cada perigo, depois dos
+  EPI's; vazio = o do cabeçalho). Na prévia, no Excel e no PDF, perigos seguidos da mesma etapa com o mesmo
+  método ficam numa célula só (como EPC's e EPI's). APR .apr.json antiga (método por etapa): ao abrir, o método
+  da etapa passa para cada perigo dela. O Controle de revisão define revisão e data.
+- HISTÓRICO ENTRE APR E PO: embaixo do "+ REVISÃO", na APR o botão "IMPORTAR DO PO" copia o Histórico de
+  revisões do PO para o Controle de revisão; no PO o botão "IMPORTAR DA APR" faz o contrário. Copia item por item
+  Motivo/Descrição, Data e Responsável (pede confirmação antes de trocar). Na linha 0, "Criação do P.O." vira
+  "Criação da APR" e vice-versa. Origem (APR) e Solicitante, Foto e Observações (PO) ficam como estão. Volta com ↶.
+- LOGOTIPO: 1º item do cabeçalho. A APR nova vem sem logotipo. "INSERIR LOGOTIPO" (ou "TROCAR LOGOTIPO") põe a
+  imagem; ela vale na prévia, no Excel (APR e Ordem de Serviço) e no PDF, e fica salva no arquivo da APR.
+  "REMOVER LOGOTIPO" deixa o espaço em branco de novo. O bloco "ORDEM DE SERVIÇO" (antes do Controle de revisão) tem
+  "EMPRESA" e "ELABORAÇÃO" (vazios na APR nova), que preenchem esses dois campos da Ordem de Serviço. Nada é
+  esticado: no cabeçalho da APR a imagem se ajusta à largura ou à altura do espaço (o que limitar primeiro); na
+  Ordem de Serviço ela fica com a altura do logotipo do modelo e a largura acompanha a proporção da imagem.
+- EPI'S ESPECÍFICOS: escreva direto no campo (separando com vírgula) ou use o botão "LISTA" ao lado: ele abre os
+  EPIs da biblioteca de pictogramas, com busca. Cada clique põe ou tira o EPI do campo; o que foi escrito à mão
+  continua valendo. Usar os nomes da lista evita divergências de grafia na conferência com o PO.
+- Medidas de controle: cada medida começa com o marcador "- ". O campo vazio já ganha "- " ao clicar, Enter abre
+  a próxima linha com "- " e Shift+Enter quebra a linha sem marcador (continuação da mesma medida). Ao sair do
+  campo, uma linha só com o "- " some.
+- Perigo: clique no campo e escolha na lista da tabela de Perigos e Riscos, igual à planilha (com "1 -", "2 -",
+  "3 -"); dá para buscar pelo nome do perigo ou do risco (Enter escolhe o primeiro). O risco vem junto com o
+  perigo e não é editável. O PD vem da tabela e pode ser trocado; se mudar, o gerador mostra o da tabela e a
+  observação de quando ele muda.
+- A tabela vem da planilha "Perigos e Riscos ... .xlsx" da pasta recursos. Mudou a planilha? Aba APR > Menu >
+  "ATUALIZAR TABELA DE PERIGOS": o gerador lê a planilha e grava o recursos\perigos_riscos.js. Na primeira vez ele
+  pede a pasta "recursos" e depois lembra.
+- A prévia à direita é igual ao Excel: mesmas colunas, páginas, logotipo, cabeçalho e rodapé, e no fim as abas
+  Ordem de Serviço, Controle de revisão e Matriz de Risco (que também vão no PDF).
+- "PENDÊNCIAS" lista o que falta preencher na APR (com "Ir para").
+- Com o PO aberto na aba PO:
+  . "IMPORTAR DO PO" traz as etapas, os perigos e os EPIs do PO (os dados da APR de perigos com o mesmo nome
+    são mantidos).
+  . "COMPARAR COM PO" abre a conferência (veja o item 5).
+
+==================================================================================================
+3. ABA PO
+==================================================================================================
+- Preencha o cabeçalho e as etapas no painel da esquerda.
+- No cabeçalho, embaixo de cada EPI básico aparece o nome curto; o nome inteiro aparece ao passar o mouse.
+- Botões de cada etapa: ↑ ↓ mudam a ordem, "+ ABAIXO" insere uma etapa nova logo abaixo, "EXCLUIR" apaga.
+  "+ ADICIONAR ETAPA" (fim da lista) cria no final.
+- Tamanho da etapa: "Automático" usa meia página se couber; se não couber, usa página inteira e continua o que
+  sobrar na página seguinte (mesmo Nº e nome). Para mandar parte da descrição para a página seguinte (mesma
+  etapa), ponha o cursor na linha e use o botão ↧ (quebra de página) do editor de texto; clique de novo para tirar.
+- No alto da aba:
+  . "IMPORTAR DA APR" traz da APR as etapas, os perigos e os EPIs que faltam no PO (o que já existe não muda).
+  . "COMPARAR COM APR" abre a mesma conferência da aba APR, sem trocar de aba (veja o item 5).
+  . "PENDÊNCIAS" lista o que falta preencher no PO (com "IR PARA").
+- Revisor de texto (embaixo da descrição de cada etapa):
+  . "ORTOGRAFIA / GRAMÁTICA": com o Gemini configurado, corrige ortografia, acentos, crase, concordância e
+    pontuação, sem mudar o sentido. SEM o Gemini (sem chave, sem internet ou endereço bloqueado na empresa),
+    corrige só a ortografia, sem internet, com o dicionário de português e regras fixas (EPI's, FDS no lugar de
+    FISPQ, "à direita", "a partir", "a fim de", "mau funcionamento", espaços e vírgulas); a janela avisa que a
+    gramática completa só funciona com o Gemini. Sem internet só troca sozinho o que é seguro (acento, hífen,
+    letra repetida ou trocada de lugar); palavra fora do dicionário sem troca segura aparece em amarelo como
+    "Fora do dicionário, conferir: palavra (sugestão: ...)" e não é mudada.
+  . "MELHORAR TEXTO" (só com o Gemini): reescreve as frases para ficarem mais claras e diretas, sem tirar
+    nenhuma instrução, sem enfraquecer proibições e obrigações ("É proibido", "Não", "somente"). É rápido; se não
+    gostar, "REFAZER PENSANDO" manda de novo com o modo pensar (mais lento, uns 5 a 20 segundos, e mais caprichado).
+  . Padrão de pontuação aplicado nos dois botões (com ou sem internet): cada item termina com ";" e o último
+    item da etapa com "."; item que abre uma sublista mantém ":"; linha sem marcador (que não é a última) não muda.
+  . O Gemini recebe a etapa inteira (nome, nível de cada item e qual é o último). Os dois botões usam o Gemini
+    Flash-Lite (cerca de 1 segundo por etapa; no teste com chave real de 05/11/2026 corrigiu tão bem quanto o
+    Flash, que é mais lento e no plano grátis só aceita uns 20 pedidos por dia). "REFAZER PENSANDO" tenta o
+    Flash com o modo pensar e, se ele estiver cheio ou no limite do dia, usa o Flash-Lite pensando. No alto da janela aparece quem revisou ("Gemini Flash",
+    "Gemini Flash-Lite" ou "dicionário, sem internet") e quantos segundos levou.
+  . Conferência da resposta do Gemini: se um número ou sigla (NR, FDS, EPI...) sumir ou mudar, ou se mudar
+    palavras demais em ORTOGRAFIA / GRAMÁTICA, ou se uma proibição/obrigação ("não", "proibido", "somente",
+    "obrigatório") sumir, a linha vem DESMARCADA com "⚠ Conferir antes de usar". As
+    regras fixas (EPI's, FDS, crase...) e o padrão de pontuação são aplicados também em cima do Gemini.
+  . Velocidade: o gerador lembra qual modelo do Gemini respondeu bem e começa por ele; modelo que não existe
+    mais é pulado. Se o Google responder "muita procura", tenta de novo uma vez; se um modelo demorar demais
+    (12 s nos botões, 60 s no modo pensar) ou estiver no limite do dia, passa para o próximo. A mesma etapa pedida de novo sem mudança vem na hora ("já revisado antes"). O dicionário
+    sem internet é carregado ao clicar na descrição, para o botão responder na hora.
+  . Abre uma janela com cada linha antes e depois (riscado vermelho sai, verde entra). Desmarque a linha que deve
+    ficar como estava e clique em "ACEITAR"; "DESCARTAR" não muda nada. Depois de aceitar, Ctrl+Z desfaz.
+  . Chave gratuita do Gemini: Menu > "CONFIGURAR GEMINI" (criar a chave em aistudio.google.com/apikey,
+    colar, "TESTAR CHAVE", "SALVAR"). A chave fica guardada neste navegador/PC.
+  . Só o texto da descrição é enviado ao Gemini (marcador, nível, alinhamento e negrito ficam como estão). No
+    plano gratuito o Google pode usar os textos enviados para melhorar a IA dele e há limite de uso por dia.
+  . Palavra técnica marcada como errada no modo sem internet: acrescente em recursos\palavras_revisor.js (abrir
+    no Bloco de Notas). Os nomes dos perigos e EPIs da biblioteca já são aceitos.
+
+==================================================================================================
+4. FOTOS E ANEXOS DO PO
+==================================================================================================
+- Fotos da etapa: "↻" gira, "AJUSTAR" corta e define o tamanho no PO (máximo 7,9 × 7 cm). Sem ajuste, a foto
+  entra inteira, cabendo em 7,9 × 7 cm. No editor da foto, "AUTOMÁTICO" usa o tamanho do AJUSTAR FOTOS.
+  "REDUZIR AO CORTE" (antes "Encaixar inteira") diminui a foto até caber inteira no corte; as sobras ficam brancas.
+- MELHORAR FOTO (no editor da foto, última linha de botões): abre um painel à direita da foto para corrigir foto
+  desbotada ou escura, sem IA e sem internet. Abre sem ajuste; "AUTOMÁTICO" mede a foto e escolhe os valores,
+  ou mexa nos controles à mão. Controles: COR (tira o desbotado e o tom puxado), BRILHO, SOMBRAS (clareia partes escuras),
+  CONTRASTE, SATURAÇÃO, CLAREZA (realça manchas e textura) e NITIDEZ. "SEM AJUSTE" volta ao original; segurar
+  "SEGURE PARA VER O ORIGINAL" compara. Com melhoria, a linha de baixo mostra "FOTO MELHORADA".
+  APLICAR grava a foto melhorada no PO (prévia, PDF, Word e Excel). A foto original e os valores ficam guardados
+  nos dados do arquivo: ao reabrir no gerador, o painel volta com os mesmos valores e dá para tirar a melhoria.
+  Vale também depois de editar o Word fora do gerador (em "USAR O DO WORD" a foto que não mudou é reconhecida);
+  se a foto for trocada no Word, fica só a foto nova. Não recria detalhes que a foto não tem nem apaga objetos.
+- DESENHAR (no editor da foto, ao lado do MELHORAR FOTO): abre um painel à direita para pôr SETA, RETÂNGULO,
+  CÍRCULO, LINHA e CAIXA DE TEXTO por cima da foto, como no Word. Escolha a forma e arraste sobre a foto (TEXTO: clique
+  na foto e digite no campo CAIXA DE TEXTO). Depois de desenhar, volta para SELECIONAR: clique na forma para mover,
+  mudar a cor, a espessura ou o texto; quadradinhos brancos mudam o tamanho, a ponta da seta e a largura da caixa de
+  texto (o texto quebra a linha sozinho). Caixa de texto: tamanho da letra, alinhamento (esquerda, centro, direita,
+  justificado) e COM FUNDO (branco com borda) ou SEM FUNDO (letra com contorno). DESFAZER/REFAZER (Ctrl+Z / Ctrl+Y),
+  APAGAR (tecla Delete) e LIMPAR (apaga todas; clique duas vezes). Clique fora das formas continua movendo a foto.
+  APLICAR grava as formas na foto do PO (prévia, PDF, Word e Excel); elas ficam guardadas nos dados do arquivo e, ao
+  reabrir o editor, o painel DESENHAR abre com elas para mexer de novo. Mover, cortar ou girar a foto leva as formas
+  junto; trocar a foto apaga as formas. A janela do editor da foto ocupa quase a tela toda (05/11/2026).
+  Os painéis DESENHAR e MELHORAR FOTO abrem e fecham deslizando pela direita; em tela baixa o painel é reduzido
+  para caber inteiro, sem barra de rolagem.
+  PREENCHIMENTO: CONTORNO (só a linha) ou PREENCHIDA (retângulo/círculo pintado por dentro, ex.: esconder o rosto).
+- Formas desenhadas no Word sobre as fotos (05/11/2026): ao abrir um PO em Word feito fora do gerador, os círculos,
+  retângulos, setas, linhas e caixas de texto que estão por cima das fotos vêm junto como formas do DESENHAR (dá
+  para mover, mudar ou apagar em AJUSTAR). O Word não guarda em qual foto a forma está; o gerador calcula pela
+  posição. Quando a posição é incerta (foto solta no Word, forma girada ou só em parte sobre a foto) a foto ganha o
+  selo "conferir formas" e o editor abre com o aviso CONFERIR FORMAS: confira e clique FORMAS CONFERIDAS (ou APLICAR).
+  Formas escondidas atrás da foto e grupos (pictograma + nome) ficam de fora; a janela de avisos da abertura conta.
+- Colar foto: copie a imagem (Word, Excel, PowerPoint, print da tela...), clique na área de fotos e use Ctrl+V,
+  ou o botão "COLAR". Com o mouse sobre uma miniatura, Ctrl+V troca aquela foto. Vale para fotos das etapas,
+  imagens dos anexos e foto do histórico.
+- AJUSTAR FOTOS (botão entre o Cabeçalho e as Etapas): abre uma janela no canto da tela para ajustar de uma vez
+  o tamanho e o corte das fotos das etapas. Medidas: foto individual até 7,9 × 7 cm, lado a lado 3,8 × 7 cm,
+  corte pelo centro. Com 7,9 cm a foto individual fica com a mesma largura de duas lado a lado mais o
+  espaço de 3 mm entre elas (borda lateral igual nos dois casos); entre linhas de fotos ficam 3 mm fixos
+  sem legenda; com legenda, 1 mm da foto até a legenda e 1 mm da legenda até a foto de baixo (prévia, PDF e Word).
+  Com a janela aberta, as fotos ficam marcadas (verde = AJUSTADA, laranja = MANTIDA).
+- Anexos: até 8 imagens por anexo (até 4 na linha superior e 4 na inferior). Em cada imagem, escolha a linha e
+  use "AJUSTAR" para recortar e definir o tamanho (ou deixe automático).
+
+==================================================================================================
+5. CONFERÊNCIA APR X PO
+==================================================================================================
+- "COMPARAR COM PO" (aba APR) ou "COMPARAR COM APR" (aba PO) abrem a mesma conferência no lugar da prévia,
+  etapa por etapa. Nem a APR nem o PO é a referência: o erro pode estar em qualquer um dos dois, e cada
+  diferença pode ser corrigida dos dois lados.
+- Trocar de aba com ela aberta não a fecha; "FECHAR COMPARAÇÃO" (ou "FECHAR CONFERÊNCIA") fecha nas duas abas.
+  Se faltar a APR ou o PO, o gerador pede o arquivo e continua na aba em que se estava. O "Exportar PDF" do PO
+  imprime o PO, mesmo com a conferência aberta.
+- AO FECHAR A CONFERÊNCIA: se a APR e/ou o PO tiverem alterações não salvas, o gerador avisa qual dos dois e
+  oferece "SALVAR APR E PO" (ou só o que mudou), "FECHAR SEM SALVAR" ou "CONTINUAR NA CONFERÊNCIA".
+- No alto: o título "CONFERÊNCIA APR X PO", quantos itens da etapa já estão conferidos e quantos faltam decidir,
+  e "Fechar conferência". As setas ← → do teclado mudam de etapa. Logo abaixo, a faixa de etapas, 5 por vez:
+  barrinha verde = etapa já aberta com tudo resolvido, cinza = etapa ainda não aberta ou com itens a decidir; a
+  etapa atual fica com contorno verde-oliva. Clique numa etapa para ir direto a ela. As setas ‹ › nas pontas da
+  faixa mostram as 5 etapas anteriores / seguintes (a etapa aberta não muda); ao mudar de etapa, a faixa
+  acompanha sozinha.
+- As etapas da APR e do PO são casadas pelo nome, mesmo em outra ordem ou com etapas a mais de um lado. Uma etapa
+  do PO que junta várias da APR (nome com várias atividades) vale para todas elas. Se o gerador casou errado, use
+  "TROCAR ETAPA DO PO" (na linha "ETAPA") e escolha a etapa certa do PO; etapa sem par mostra os botões para criar
+  a etapa do outro lado ou escolher a correspondente. A etapa "Todas as atividades acima" do PO e os EPI's
+  básicos valem para todas as etapas.
+- "ETAPA, PERIGOS E EPIs": uma linha por item, APR à esquerda, PO à direita e, no meio, a situação:
+  "✓ INFORMAÇÕES COMPATÍVEIS"; "INFORMAÇÕES DIVERGENTES", com "< USAR DO PO" (corrige a APR) e "USAR DA APR >"
+  (corrige o PO); "CONSTA APENAS NO PO" / "CONSTA APENAS NA APR", com "< INCLUIR NA APR" / "TIRAR DO PO" (ou "TIRAR
+  DA APR" / "INCLUIR NO PO >", que pede o pictograma). Botões com borda verde-oliva corrigem a APR; com borda
+  azul, o PO. Depois de decidir aparece "✓ APR corrigida" ou "✓ PO corrigido". "MOSTRAR APENAS DIVERGÊNCIAS"
+  esconde as linhas compatíveis. A etiqueta da situação tem a largura dos dois botões de baixo.
+  Os textos também podem ser trocados na própria grade, dos dois lados: o PERIGO é um campo com o risco embaixo
+  que abre a lista padrão de perigos (com busca; na APR troca perigo, risco e PD, no PO só o texto, o pictograma
+  fica); perigo fora da lista aparece com "FORA DA LISTA". No PO o campo mostra o nome do perigo e, à direita, o
+  pictograma: clicar no pictograma abre a mesma janela "Trocar perigo" do editor do PO. ETAPA e EPI são campos
+  de texto: o texto vale ao apertar Enter ou sair do campo (Esc desfaz). O nome da ETAPA em uma linha só fica
+  centralizado na altura do campo; com duas linhas, começa no alto. Itens que ficam iguais se juntam sozinhos
+  numa linha "✓ INFORMAÇÕES COMPATÍVEIS".
+- Embaixo, o quadro "MEDIDAS DE CONTROLE" (título centralizado, largura toda), por perigo, com código M1, M2...:
+  verde = o PO explica (à direita diz onde: "Frase 5", "EPI" ou "Recurso"; o nome do item aparece ao passar o
+  mouse e no painel; essa coluna tem largura fixa de 120 px, a do texto "Não aplicável no PO"), vermelho = o PO
+  ainda não explica, cinza = vale pelos EPIs ("EPI / EPC da Etapa") ou "não aplicável no PO". O texto da medida
+  é um campo: corrija direto na linha (vale no Enter ou ao sair do campo; Esc desfaz). Embaixo das medidas, a
+  legenda das 3 cores.
+- Clicar numa medida abre, logo abaixo dela, "FRASES DO PO MAIS PARECIDAS" (as 3 frases da descrição mais
+  parecidas, com as palavras em comum destacadas), "EPIS" (os EPIs do PO na etapa) e "RECURSOS UTILIZADOS"
+  (Ferramenta, Equipamento, Documento e Materiais do PO na etapa), cada item com "VINCULAR" (vincular a um EPI ou
+  recurso também conta como explicada). Vínculo achado sozinho mostra "CONFIRMAR VÍNCULO"; o vínculo feito mostra
+  "✓ VINCULADA" (clique de novo desfaz). Embaixo, 4 botões: "NÃO APLICÁVEL NO PO" (clique de novo desfaz),
+  "EDITAR TEXTO NO PO", "DESCRIÇÃO COMPLETA" (troca a lista por todas as frases da descrição; "FECHAR DESCRIÇÃO"
+  volta) e "FECHAR". Depois de vincular ou marcar "não aplicável" o gerador passa para a próxima medida ainda não
+  explicada. A medida aberta fica presa no topo (abaixo do cabeçalho da conferência) enquanto a página rola;
+  clicar em qualquer lugar da tela fora do painel azul (no editor da esquerda, no cabeçalho, em outra medida...)
+  ou de novo na medida fecha a edição; clicar no texto da própria medida aberta não fecha.
+- Logo abaixo da legenda, em vermelho, as medidas da APR que o PO ainda não explica: "EDITAR TEXTO NO PO" ou
+  "NÃO APLICÁVEL NO PO" (clique na medida para abrir o painel dela). Quando zera: "✓ Todas as medidas desta etapa
+  estão explicadas no PO." As frases do PO sem medida na APR não aparecem mais e não contam como "a decidir"
+  (marcações antigas continuam guardadas na APR).
+- "EDITAR TEXTO NO PO" abre a descrição inteira da etapa no mesmo editor da aba PO, com a frase sugerida já no
+  fim; ao "SALVAR", a frase nova ou alterada fica vinculada à medida. Frases que não mudaram continuam
+  vinculadas como estavam.
+- As óbvias já vêm conferidas (auto): todas as palavras da medida na frase, ou quase todas faltando só palavras
+  comuns (calibrado com os 69 pares APR × PO do treino). Número diferente ("20 km/h" × "10 km/h") nunca é
+  conferido sozinho.
+- Atalhos: ← → mudam a etapa; ↑ ↓ escolhem a medida; 1 a 3 = VINCULAR das 3 primeiras frases; N = não aplicável
+  no PO; Esc fecha o painel.
+- As ligações ficam salvas só na APR (dentro do Excel da APR, na parte escondida); o que for corrigido no PO fica
+  na aba PO (Ctrl+Z desfaz).
+- O comparador antigo da aba PO (colunas PO | APR, "É esta" / "Incluir na APR" / "Não precisa na APR") saiu
+  (19/10/2026); as marcações "não precisa na APR" já feitas continuam guardadas na APR.
+
+==================================================================================================
+6. SALVAR E RASCUNHO AUTOMÁTICO
+==================================================================================================
+- "SALVAR" (Ctrl+S) grava o documento da aba aberta (desde 28/10/2026): o PO em WORD (.docx) e a APR em EXCEL
+  (.xlsx), iguais ao "Exportar Word" / "Exportar Excel". Dentro do arquivo, numa parte escondida, vão também os
+  dados de trabalho do gerador (ligações do comparador, método por perigo, logotipo, recorte das fotos etc.).
+  Num documento novo ele pergunta onde salvar; depois grava direto no mesmo arquivo. "SALVAR COMO" sempre pergunta
+  onde salvar. Se o arquivo estiver aberto no Word/Excel, feche-o antes de salvar.
+- "ABRIR" (Ctrl+O): o Word/Excel salvo pelo gerador volta exatamente como estava (o comparador também) e o
+  "SALVAR" grava nele de novo. Se alguém mexeu no arquivo direto no Word/Excel, o gerador avisa e pergunta:
+  "USAR O DO WORD/EXCEL" (lê o que está escrito agora; na APR as ligações do comparador continuam nas etapas e
+  perigos que não mudaram) ou "USAR O DO GERADOR" (como o gerador salvou da última vez, sem a edição de fora).
+- Arquivos antigos .po.json e .apr.json ainda abrem, só para passar para o formato novo: abra e use "SALVAR"
+  (ele pergunta onde gravar o .docx/.xlsx). O .json antigo não é apagado nem alterado.
+- O Word salvo fica maior que o .po.json antigo (as fotos vão no documento e nos dados escondidos).
+- RASCUNHO AUTOMÁTICO: o gerador guarda no navegador, sozinho, o PO e a APR que estão abertos. Se a página fechar
+  com alterações não salvas, ao abrir de novo ele pergunta: "RECUPERAR" ou "COMEÇAR NOVO". As fotos do rascunho
+  são guardadas uma vez só (não a cada pausa na digitação), para o gerador não ficar lento em PO com muitas fotos.
+- Fechar o navegador ou a aba com alterações não salvas (APR ou PO, mesmo documento novo) mostra o aviso do
+  navegador antes de fechar.
+
+==================================================================================================
+7. EXPORTAR (PDF, EXCEL, WORD)
+==================================================================================================
+- Antes de exportar, se faltar preencher algo, aparece a lista do que falta com "EXPORTAR MESMO ASSIM" (no PO: PDF, Excel e
+  Word; na APR: Excel).
+- PO:
+  . "EXPORTAR PDF" abre a janela de impressão: em Destino escolha "Salvar como PDF". O nome do arquivo já vem como
+    PO.<código> - <nome>_Rev<NN>.
+  . "EXPORTAR EXCEL" salva o PO em .xlsx no layout do modelo B.00.183-00 (abas do PO, Lista de Treinamento e
+    Revisões). O realce de cor da descrição não vai para o Excel.
+  . "EXPORTAR WORD" salva o PO em .docx no layout do PO.XX.000 - Modelo Padrão_Rev01, com as mesmas páginas do PDF
+    (inclusive o realce). Se editar no Word e o texto crescer, a página pode mudar.
+- APR:
+  . "EXPORTAR EXCEL" usa o modelo "APR.XX.000 - Modelo Padrão" (margens de 0,5 cm).
+  . "EXPORTAR PDF" imprime a prévia.
+
+==================================================================================================
+8. ABRIR DOCUMENTOS ANTIGOS (WORD E EXCEL)
+==================================================================================================
+- PO em Word (.docx), pelo "ABRIR" da aba PO:
+  . Word salvo ou exportado pelo gerador: volta exatamente como estava. Se ele foi alterado no Word depois, o
+    gerador pergunta qual versão usar (item 6).
+  . PO antigo em Word: o gerador lê cabeçalho, etapas, descrições, fotos e legendas e mostra uma lista do que
+    conferir. As fotos mantêm o recorte, o tamanho e o lado a lado do Word (até 2 por linha). Perigos e EPIs são
+    comparados com a biblioteca pela imagem (e pelo nome escrito na célula); o que não tiver certeza fica com a
+    imagem original do Word (com o nome escrito nela). Esses ficam com a marca amarela "conferir" no editor. Para
+    trocar, clique no pictograma no painel de edição e escolha um da biblioteca (vale para Perigos, EPI's
+    específicos e EPI's básicos). O gerador APRENDE a troca (veja o item 9).
+  . Ele também já vem treinado com os 70 POs da Villares, os 155 da JSL e os 108 da pasta "Antigos" de
+    "Treinamento do Gerador" (recursos\pictos_treino.js): as imagens desses POs saem com o pictograma certo e com
+    o nome que está escrito na imagem. EPIs recortados de um quadro com vários EPIs (recorte do Word) também são
+    reconhecidos.
+  . EPI escrito só com o nome, sem imagem ("Luva multitato, creme resistente a óleo e graxa"): entra com o nome
+    escrito; se a biblioteca tiver um pictograma com esse nome, entra com ele, senão fica "não achado" para
+    escolher.
+  . Coluna sem título (fotos ou descrição) ou PO sem a linha de títulos: as colunas são deduzidas pelo conteúdo,
+    com aviso. Caixas de texto sobre as fotos ("ABRINDO BOBINA") viram a legenda quando há uma por foto.
+  . Anexos: o título pode ser "ANEXO 1 – ...", "Anexo I:", "ANEXO 2)" etc. Todas as imagens depois do título
+    entram, até o próximo anexo ou o fim do documento. Mais de 8 imagens: o resto vai para um anexo
+    "(continuação)".
+  . Imagens EMF e WMF (formatos antigos, ex.: check-lists colados do Excel) são convertidas pelo próprio gerador.
+    Se alguma não der para converter, o aviso diz onde inserir a imagem de novo.
+  . A lista de avisos separa o que "Precisa de atenção" do que é só "Para conferir"; os pictogramas não
+    reconhecidos viram uma linha só (clique para ver por etapa).
+  . O documento abre como novo: use "SALVAR" para gravar o PO em Word (o Word antigo não é alterado).
+- PO em Excel (.xlsx) no modelo B.00.183, pelo "ABRIR" da aba PO:
+  . Excel exportado pelo gerador: volta exatamente como estava (avisa se foi alterado no Excel).
+  . PO montado no Excel: as colunas são achadas pelos títulos (Nº, Nome etapa, Fotos, Pontos de atenção,
+    Descrição, Perigos, EPI's); cada imagem vai para a etapa onde está. Legendas "FOTO nn" em caixas de texto
+    viram a legenda da foto. Setas e círculos desenhados sobre as fotos não vão. As páginas do modelo ainda não
+    usadas ("XXXX") são ignoradas. O histórico vem da aba Revisões.
+  . PO em Excel antigo (.xls): salve como .xlsx antes.
+- APR antiga em Excel (.xlsx ou .xls antigo, sem precisar converter), pelo "ABRIR" da aba APR: as colunas são
+  achadas pelos títulos (Nº, Etapa, Situação, Perigo, Risco, EPC, EPI, PO, PD, Medidas). Perigo escrito igual ao
+  da tabela (mudando só pontuação ou maiúsculas) passa a usar o nome da tabela; os outros aparecem como "fora da
+  tabela", com a sugestão do perigo parecido e o botão "Usar este". Depois use "SALVAR" para gravar a APR em
+  Excel no modelo novo. (APR salva pelo gerador não passa por aqui: volta exatamente como estava, item 6.)
+  Planilha com senha para abrir não dá para ler: tire a senha no Excel e abra de novo.
+
+==================================================================================================
+9. PICTOGRAMAS
+==================================================================================================
+- Vêm das pastas Gerador de PO\Pictogramas\Perigos e Gerador de PO\Pictogramas\EPIs.
+- Se incluir ou renomear um pictograma, use Menu > "ATUALIZAR BIBLIOTECA" e escolha a pasta "Pictogramas" (o
+  navegador pede permissão para gravar nela o biblioteca.js). A biblioteca usada é a Pictogramas\biblioteca.js; a
+  de recursos\biblioteca.js fica só de reserva.
+- PICTOGRAMAS APRENDIDOS: cada troca de pictograma numa imagem não reconhecida é gravada na hora no arquivo
+  Pictogramas\aprendidos.js (vale também em outros computadores que usam a mesma pasta). Na primeira vez o
+  gerador pede para escolher a pasta "Pictogramas" (ou para permitir gravar nela) e depois lembra. "AGORA NÃO"
+  deixa o aprendido só no navegador até a próxima troca. Apagar o aprendidos.js esquece tudo.
+
+==================================================================================================
+10. DESFAZER / REFAZER
+==================================================================================================
+- Ctrl+Z desfaz e Ctrl+Y (ou Ctrl+Shift+Z) refaz, também pelos botões ↶ ↷ da barra de título. Vale para qualquer
+  alteração (textos, exclusões, ordem, fotos, pictogramas), até 100 passos, com histórico separado para a APR e
+  para o PO. Recomeça ao abrir outro arquivo ou fechar o navegador.
+- Com a conferência aberta: cada ação do comparador (USAR DA APR, INCLUIR NO PO, < USAR DO PO, TIRAR..., < INCLUIR
+  NA APR, troca de perigo/pictograma, textos editados, VINCULAR, NÃO APLICÁVEL NO PO, EDITAR TEXTO NO PO...) é um
+  passo que volta a APR e o PO juntos, e a conferência continua aberta na mesma etapa. Ctrl+Z dentro de um campo
+  em edição desfaz só a digitação. Vale igual nas duas abas, e o que for alterado no painel da esquerda (APR ou
+  PO) com a conferência aberta também entra nesse mesmo desfazer.
+
+==================================================================================================
+11. PASTAS
+==================================================================================================
+- Pictogramas: imagens dos perigos e EPIs, a biblioteca (biblioteca.js) usada pelo gerador e os pictogramas
+  aprendidos (aprendidos.js).
+- recursos: arquivos de funcionamento do gerador (não mexer) e o "Exemplo - Modelo Padrão.po.json", que reproduz
+  o PO.XX.000 - Modelo Padrão_Rev01 para teste. O modelo da APR em Excel fica dentro de recursos\modelo_apr.js.
+- Ao enviar o gerador para alguém, envie a pasta "Gerador de PO" inteira.
