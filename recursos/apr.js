@@ -115,6 +115,16 @@ const APR = (() => {
     'Queda de materiais, Batida Contra': 'Queda de materiais, Tombamento, batida Contra e Atingido por Aprisionamento entre partes.',
     'Queda de materiais, Tombamento, Batida contra': 'Queda de materiais, Tombamento, batida Contra e Atingido por Aprisionamento entre partes.',
     'Movimentação de carga, Queda de materiais, Tombamento, Batida contra, Aprisionamento entre partes': 'Queda de materiais, Tombamento, batida Contra e Atingido por Aprisionamento entre partes.',
+    // duvidosos da mesma família 1/2/3 (07/11/2026, regra do usuário: o PD decide o nº, PD 3 = 1, PD 4 = 2, PD 5 = 3)
+    'Batida Contra': 'Queda de materiais, Tombamento, batida Contra e Atingido por Aprisionamento entre partes.',
+    'Aprisionamento entre partes': 'Queda de materiais, Tombamento, batida Contra e Atingido por Aprisionamento entre partes.',
+    'Atingido por Aprisionamento entre partes': 'Queda de materiais, Tombamento, batida Contra e Atingido por Aprisionamento entre partes.',
+    'Queda de materiais, Atingido por Aprisionamento entre partes': 'Queda de materiais, Tombamento, batida Contra e Atingido por Aprisionamento entre partes.',
+    'Queda de materiais, Tombamento, Atingido por Aprisionamento entre partes': 'Queda de materiais, Tombamento, batida Contra e Atingido por Aprisionamento entre partes.',
+    'Batida Contra e Atingido por Aprisionamento entre partes': 'Queda de materiais, Tombamento, batida Contra e Atingido por Aprisionamento entre partes.',
+    'Atropelamento': 'Atropelamento, colisão.', 'Atropelamento, Batida Contra': 'Atropelamento, colisão.',
+    'Queda de materiais, Batida Contra e Atropelamento': 'Atropelamento, colisão.',
+    'Queda de nível diferente': 'Queda de nível diferente e queda de materiais.',
   };
   let trocas = null;
   function perigoDaTabela(perigo, pd) {
