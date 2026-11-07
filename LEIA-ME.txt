@@ -162,6 +162,7 @@ SUMÁRIO
   sem legenda; com legenda, 1 mm da foto até a legenda e 1 mm da legenda até a foto de baixo (prévia, PDF e Word).
   POSIÇÃO DAS FOTOS (em cada etapa, abaixo de + FOTOS e COLAR): DISTRIBUIR (padrão) divide o espaço que sobra
   em partes iguais em cima, entre as fotos e embaixo; CENTRALIZADO deixa as fotos juntas no meio.
+  Ao trocar, a prévia rola até as fotos da etapa, só se elas não estiverem inteiras na tela.
   Quebra de página: cabem as fotos enquanto a SOMA das alturas (fotos + legendas + espaços) não passa da coluna;
   cada foto fica na altura dela (máximo 7 cm).
   Com a janela aberta, as fotos ficam marcadas (verde = AJUSTADA, laranja = MANTIDA).

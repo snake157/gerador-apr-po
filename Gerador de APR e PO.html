@@ -3100,7 +3100,8 @@ function edEtapa(e, i) {
     areaColar(colarFotos, fotos,
       el('div', {class: 'linha-botoes'}, el('button', {class: 'btn', onclick: () => escolherImagens(true, colarFotos)}, '+ Fotos'), botaoColar(colarFotos))),
     // POSIÇÃO DAS FOTOS da etapa, abaixo de + FOTOS e COLAR (07/11/2026)
-    el('div', {class: 'pos-fotos'}, selecao('Posição das fotos', e, 'posFotos', [['distribuir', 'DISTRIBUIR'], ['centro', 'CENTRALIZADO']])),
+    // ao trocar, a prévia rola até a coluna de fotos da etapa se ela não estiver inteira na tela (07/11/2026)
+    el('div', {class: 'pos-fotos', onchange: () => { rolarFotosDe = e.id; }}, selecao('Posição das fotos', e, 'posFotos', [['distribuir', 'DISTRIBUIR'], ['centro', 'CENTRALIZADO']])),
     el('div', {class: 'sub', 'data-campo': 'descricao'}, 'Descrição'),
     el('div', {class: 'dica'}, 'Um item por linha (Enter cria o próximo, com o mesmo marcador). Tab / Shift+Tab mudam o nível; Enter numa linha vazia ou Backspace no começo tiram o marcador.'),
     editorTexto(e),
@@ -3936,6 +3937,21 @@ function renderPrevia() {
   ajustarTextos(cont);
   ajustarZoom();
   atualizarInfos();
+  if (rolarFotosDe) { const id = rolarFotosDe; rolarFotosDe = null; mostrarFotosNaPrevia(id); }
+}
+// POSIÇÃO DAS FOTOS (07/11/2026): depois de redesenhar, mostra a coluna de fotos da etapa na prévia.
+// Se ela já está inteira na tela, não rola; senão rola suave até ela ficar no centro (se for mais alta que a tela, mostra o topo).
+// Etapa dividida em blocos: usa o bloco com mais fotos.
+let rolarFotosDe = null;
+function mostrarFotosNaPrevia(id) {
+  const p = $('#previa');
+  const cols = [...document.querySelectorAll(`#paginas .bloco[data-etapa="${id}"] .c-fotos`)];
+  const col = cols.sort((a, b) => b.querySelectorAll('img').length - a.querySelectorAll('img').length)[0];
+  if (!p || !col || !col.querySelector('img')) return;
+  const r = col.getBoundingClientRect(), pr = p.getBoundingClientRect();
+  if (r.top >= pr.top && r.bottom <= pr.bottom) return;
+  const delta = r.height > pr.height ? r.top - pr.top - 8 : (r.top + r.height / 2) - (pr.top + pr.height / 2);
+  p.scrollTo({top: p.scrollTop + delta, behavior: 'smooth'});
 }
 function ajustarTextos(raiz) {
   raiz.querySelectorAll('[data-fit]').forEach(n => {
