@@ -245,7 +245,30 @@ const ENVIOS = (() => {
     const atualizarTotal = () => mostrarTotal(corpo.querySelectorAll('.env-item').length);
     corpo.replaceChildren(...envios.map(e => {
       const novo = e.tipo === 'perigo-novo';
-      const atual = novo ? null : listaBib(e.tipo).find(p => p.nome === e.nome);
+      // pictograma (aprovado 07/11/2026): o aprovador pode trocar TIPO e NOME e escolher SUBSTITUIR ou NOVO
+      const pic = novo ? null : {tipo: e.tipo, modo: 'substituir', area: div('env-dados'),
+        nome: el('input', {type: 'text', value: e.nome, list: 'envLista' + e.id, autocomplete: 'off', 'aria-label': 'Nome'}),
+        lista: el('datalist', {id: 'envLista' + e.id})};
+      if (pic) {
+        const chaveTipo = div('env-chave', ...['perigo', 'epi'].map(t => el('button', {type: 'button', 'data-t': t}, t === 'perigo' ? 'Perigo' : 'EPI')));
+        const chaveModo = div('env-chave', ...['substituir', 'novo'].map(t => el('button', {type: 'button', 'data-m': t}, t === 'novo' ? 'Novo' : 'Substituir')));
+        const mostrar = () => {
+          chaveTipo.querySelectorAll('button').forEach(b => b.classList.toggle('sel', b.dataset.t === pic.tipo));
+          chaveModo.querySelectorAll('button').forEach(b => b.classList.toggle('sel', b.dataset.m === pic.modo));
+          const n = pic.nome.value.trim(), atual = listaBib(pic.tipo).find(p => p.nome === n);
+          pic.area.replaceChildren(
+            atual ? div('env-compara', 'Atual', el('img', {src: atual.img, alt: ''}), '→ novo', el('img', {src: e.mini, alt: ''})) : '',
+            atual ? div('env-campo', el('span', {class: 'env-rot'}, 'Já existe com este nome'), chaveModo) : el('span', {}, selo('Novo: não existe com este nome', true)),
+            atual ? el('span', {class: 'env-quem'}, `SUBSTITUIR: troca o atual. NOVO: entra ao lado do atual como "${n} (2)", e no gerador dá para escolher qual usar.`) : '');
+        };
+        const encherLista = () => pic.lista.replaceChildren(...(pic.tipo === 'perigo' ? nomesTabela() : [...new Set(listaBib('epi').map(p => p.nome))]).map(n => el('option', {value: n})));
+        chaveTipo.onclick = ev => { const t = ev.target.dataset.t; if (t && t !== pic.tipo) { pic.tipo = t; encherLista(); mostrar(); } };
+        chaveModo.onclick = ev => { const m = ev.target.dataset.m; if (m) { pic.modo = m; mostrar(); } };
+        pic.nome.oninput = mostrar;
+        pic.campos = [div('env-campo', el('span', {class: 'env-rot'}, 'Tipo'), chaveTipo),
+          div('env-campo', el('span', {class: 'env-rot'}, 'Nome (você pode mudar)'), pic.nome, pic.lista), pic.area];
+        encherLista(); mostrar();
+      }
       const campos = novo ? {
         perigo: el('input', {type: 'text', value: e.perigo, 'aria-label': 'Perigo'}),
         risco: el('textarea', {'aria-label': 'Risco'}, e.risco),
@@ -260,7 +283,7 @@ const ENVIOS = (() => {
           e.obs ? el('span', {class: 'env-quem'}, 'Obs.: ' + e.obs) : '',
           ...(novo ? [div('env-campo', el('span', {class: 'env-rot'}, 'Perigo'), campos.perigo), div('env-campo', el('span', {class: 'env-rot'}, 'Risco'), campos.risco),
                       div('env-campo', el('span', {class: 'env-rot'}, 'PD (você define)'), campos.pd)]
-            : [atual ? div('env-compara', 'Atual', el('img', {src: atual.img, alt: ''}), '→ novo', el('img', {src: e.mini, alt: ''}), selo('Substitui', false)) : el('span', {}, selo('Novo', true))]),
+            : pic.campos),
           div('env-linha',
             el('button', {class: 'btn primario', onclick: async ev => {
               const d = {senha, id: e.id};
@@ -268,12 +291,16 @@ const ENVIOS = (() => {
                 Object.assign(d, {perigo: campos.perigo.value.trim(), risco: campos.risco.value.trim(), pd: Number(campos.pd.value)});
                 if (!d.perigo || !d.risco) { alert('Preencha o PERIGO e o RISCO.'); return; }
                 if (!d.pd) { alert('Escolha o PD antes de aprovar.'); campos.pd.focus(); return; }
+              } else {
+                Object.assign(d, {tipo: pic.tipo, nome: pic.nome.value.trim(), modo: pic.modo});
+                if (!d.nome) { alert('Escreva o nome do pictograma.'); pic.nome.focus(); return; }
+                if (d.tipo === 'perigo' && !nomesTabela().includes(d.nome)) { alert(`"${d.nome}" não está na tabela de perigos. Escolha um nome da lista.`); pic.nome.focus(); return; }
               }
               const b = ev.currentTarget; b.disabled = true; b.textContent = 'Aprovando…';
               try {
                 const r = await chamar('aprovar', d);
                 item.remove(); atualizarTotal(); vazio(); aplicarAqui(r);
-                aviso(`Aprovado: ${novo ? d.perigo : e.nome}. Em cerca de 1 minuto todos veem no site.`);
+                aviso(`Aprovado: ${novo ? d.perigo : r.nome}. Em cerca de 1 minuto todos veem no site.`);
               } catch (x) { b.disabled = false; b.textContent = 'Aprovar'; alert('Não consegui aprovar: ' + erroAmigavel(x)); if (x.status === 404) { item.remove(); vazio(); } }
             }}, 'Aprovar'),
             el('button', {class: 'btn', onclick: async ev => {

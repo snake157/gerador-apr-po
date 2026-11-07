@@ -10,6 +10,7 @@
 //   /api/contar     {senha}                         -> {total}
 //   /api/pendentes  {senha}                         -> {envios:[...]}
 //   /api/aprovar    {senha, id, perigo?, risco?, pd?, obs?}   (perigo novo: o aprovador corrige e escolhe o PD)
+//                   pictograma: {senha, id, tipo?, nome?, modo?: "substituir" | "novo"}
 //   /api/recusar    {senha, id}
 //
 // Configurar no Cloudflare (Settings > Variables and Secrets), como "Secret":
@@ -269,10 +270,18 @@ async function aprovar(env, d) {
     if (!linha.perigo || !linha.risco) return erro('preencha o PERIGO e o RISCO');
     if (![1, 2, 3, 4, 5].includes(linha.pd)) return erro('escolha o PD (1 a 5)');
   }
+  // pictograma: o aprovador pode trocar o tipo e o nome, e escolher SUBSTITUIR ou NOVO (entra como "Nome (2)")
+  let tipo = e.tipo, nome = e.nome, modo = d.modo === 'novo' ? 'novo' : 'substituir', semNome = false;
+  if (e.tipo !== 'perigo-novo') {
+    if (d.tipo === 'perigo' || d.tipo === 'epi') tipo = d.tipo;
+    if (d.nome !== undefined) nome = limpar(d.nome, 150);
+    if (!nome) return erro('falta o nome do pictograma');
+    if (/[\\/:*?"<>|[\]]/.test(nome)) return erro('o nome não pode ter \\ / : * ? " < > | [ ]');
+  }
   let ja = false;
   const sha = await gravarNoMain(env,
     e.tipo === 'perigo-novo' ? `Perigo novo "${linha.perigo}" na tabela (enviado por ${e.autor})`
-      : `Pictograma de ${e.tipo === 'perigo' ? 'perigo' : 'EPI'} "${e.nome}" (enviado por ${e.autor})`,
+      : `Pictograma de ${tipo === 'perigo' ? 'perigo' : 'EPI'} "${nome}" (enviado por ${e.autor})`,
     async base => {
       if (e.tipo === 'perigo-novo') {
         const js = await lerArquivo(env, TABELA_JS, base);
@@ -280,14 +289,23 @@ async function aprovar(env, d) {
         const xlsx = await lerArquivo(env, TABELA_XLSX, base, true);
         return [{ caminho: TABELA_JS, texto: colocarNaTabelaJs(js, linha) }, { caminho: TABELA_XLSX, base64: base64(await planilhaComPerigo(xlsx, linha)) }];
       }
-      const r = colocarNaBiblioteca(await lerArquivo(env, BIB, base), LISTA[e.tipo], e.nome, e.mini);
-      substituiu = r.substituiu;
+      if (tipo === 'perigo') {
+        const tab = perigosDaTabela(await lerArquivo(env, TABELA_JS, base));
+        if (!tab.some(r => r.perigo === nome)) { semNome = true; return []; }
+      }
+      const bib = await lerArquivo(env, BIB, base);
+      const existe = n => bib.includes(`{"nome":${JSON.stringify(n)},"img":"`);
+      let final = nome;
+      if (modo === 'novo' && existe(nome)) { let k = 2; while (existe(`${nome} (${k})`)) k++; final = `${nome} (${k})`; }
+      const r = colocarNaBiblioteca(bib, LISTA[tipo], final, e.mini);
+      substituiu = r.substituiu; nome = final;
       const ext = ((e.nomeArquivo || '').match(/\.(png|jpe?g)$/i) || ['.png'])[0].toLowerCase();
-      return [{ caminho: BIB, texto: r.texto }, { caminho: `${PASTA[e.tipo]}/${e.nome}${ext}`, base64: e.arquivo }];
+      return [{ caminho: BIB, texto: r.texto }, { caminho: `${PASTA[tipo]}/${final}${ext}`, base64: e.arquivo }];
     });
   if (ja) return erro(`o perigo "${linha.perigo}" já está na tabela`, 409);
-  await apagarPendente(env, e.id, p.meta.sha, `Aprovado: ${e.nome}`);
-  return resposta({ ok: true, commit: sha, substituiu, linha, tipo: e.tipo, nome: e.nome, mini: e.mini });
+  if (semNome) return erro(`"${nome}" não está na tabela de perigos; escolha um nome da lista`, 400);
+  await apagarPendente(env, e.id, p.meta.sha, `Aprovado: ${nome}`);
+  return resposta({ ok: true, commit: sha, substituiu, linha, tipo: e.tipo === 'perigo-novo' ? e.tipo : tipo, nome, mini: e.mini });
 }
 
 async function recusar(env, d) {
