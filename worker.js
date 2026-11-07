@@ -1,12 +1,27 @@
 // Cloudflare Workers: /api/... vai para o carteiro (functions/api/[acao].js); o resto é o site estático.
+// O endereço principal (/) já abre o gerador direto, sem passar pela página "Abrir o Gerador" (index.html).
 import { onRequestPost, onRequestOptions } from './functions/api/[acao].js';
+
+const GERADOR = '/Gerador%20de%20APR%20e%20PO.html';
+
+async function arquivo(env, request, caminho) {
+  const base = new URL(request.url);
+  let r = await env.ASSETS.fetch(new Request(new URL(caminho, base), request));
+  // o Cloudflare pode redirecionar "x.html" para "x": segue aqui dentro, sem mudar o endereço na barra
+  if (r.status >= 300 && r.status < 400 && r.headers.get('Location')) r = await env.ASSETS.fetch(new Request(new URL(r.headers.get('Location'), base), request));
+  return r;
+}
 
 export default {
   async fetch(request, env) {
-    const m = new URL(request.url).pathname.match(/^\/api\/([a-z]+)\/?$/);
-    if (!m) return env.ASSETS.fetch(request);
-    if (request.method === 'OPTIONS') return onRequestOptions();
-    if (request.method === 'POST') return onRequestPost({ request, env, params: { acao: m[1] } });
-    return new Response('Use POST', { status: 405 });
+    const caminho = new URL(request.url).pathname;
+    const m = caminho.match(/^\/api\/([a-z]+)\/?$/);
+    if (m) {
+      if (request.method === 'OPTIONS') return onRequestOptions();
+      if (request.method === 'POST') return onRequestPost({ request, env, params: { acao: m[1] } });
+      return new Response('Use POST', { status: 405 });
+    }
+    if (caminho === '/' || caminho === '/index.html' || caminho === '/index') return arquivo(env, request, GERADOR);
+    return env.ASSETS.fetch(request);
   },
 };
