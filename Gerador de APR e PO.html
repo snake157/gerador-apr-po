@@ -588,6 +588,17 @@ body.col-anim #previa{overflow-x:hidden}   /* a prévia já tem o tamanho final:
   #avisoCelular b{font-size:17px;text-transform:uppercase;letter-spacing:.03em}
   #avisoCelular button{font:700 13px Arial,Helvetica,sans-serif;text-transform:uppercase;letter-spacing:.03em;padding:10px;border-radius:6px;border:1px solid #fff;background:transparent;color:#fff;cursor:pointer}
 }
+/* botões flutuantes de voltar ao topo (07/11/2026): aparecem só depois de descer; esquerdo = coluna de edição, direito = prévia */
+.btTopo{position:fixed;bottom:16px;z-index:30;width:36px;height:36px;padding:0;border:1px solid var(--ui-borda);border-radius:50%;background:#fff;color:var(--azul);cursor:pointer;display:flex;align-items:center;justify-content:center;box-shadow:0 1px 5px rgba(0,0,0,.3);opacity:0;pointer-events:none;transition:opacity .2s,background-color .15s}
+.btTopo.visivel{opacity:1;pointer-events:auto}
+.btTopo svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round;pointer-events:none}
+.btTopo:hover{background:var(--azul);border-color:var(--azul);color:#fff}
+body.aba-apr .btTopo{color:#5D6532}
+body.aba-apr .btTopo:hover{background:#5D6532;border-color:#5D6532;color:#fff}
+#btTopoEditor{left:16px}
+#btTopoPrevia{right:30px}
+body.sem-editor #btTopoEditor{display:none}
+@media print{.btTopo{display:none!important}}
 </style>
 </head>
 <body>
@@ -595,6 +606,8 @@ body.col-anim #previa{overflow-x:hidden}   /* a prévia já tem o tamanho final:
   <aside id="editor"></aside>
   <main id="previa"><div id="paginas"></div></main>
 </div>
+<button id="btTopoEditor" class="btTopo" title="Voltar ao topo da coluna de edição" aria-label="Voltar ao topo da coluna de edição"><svg viewBox="0 0 16 16" aria-hidden="true"><polyline points="3.5,9.5 8,5 12.5,9.5"/></svg></button>
+<button id="btTopoPrevia" class="btTopo" title="Voltar ao topo da prévia" aria-label="Voltar ao topo da prévia"><svg viewBox="0 0 16 16" aria-hidden="true"><polyline points="3.5,9.5 8,5 12.5,9.5"/></svg></button>
 <button id="btColuna" title="Ocultar a coluna de edição" aria-label="Ocultar a coluna de edição"><svg viewBox="0 0 16 16" aria-hidden="true"><rect x="1.5" y="2.5" width="13" height="11" rx="2"/><line x1="6" y1="2.5" x2="6" y2="13.5"/></svg></button>
 <div id="medidor"></div>
 <div id="modal" hidden></div>
@@ -4316,5 +4329,14 @@ window.addEventListener('afterprint', ajustarZoom);
 <script src="recursos/planilha_previa.js"></script>
 <script src="recursos/xls.js"></script>
 <script src="recursos/apr.js"></script>
+<script>
+// botões flutuantes de voltar ao topo (07/11/2026): só aparecem depois de descer 200 px; sobem com rolagem suave
+[['#editor', '#btTopoEditor'], ['#previa', '#btTopoPrevia']].forEach(([c, b]) => {
+  const C = document.querySelector(c), B = document.querySelector(b);
+  const atualizar = () => B.classList.toggle('visivel', C.scrollTop > 200);
+  C.addEventListener('scroll', atualizar, {passive: true});
+  B.addEventListener('click', () => C.scrollTo({top: 0, behavior: 'smooth'}));
+});
+</script>
 </body>
 </html>
