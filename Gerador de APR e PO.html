@@ -613,7 +613,7 @@ body.sem-editor #btTopoEditor{display:none}
 <div id="modal" hidden></div>
 <div id="aviso"></div>
 <div id="avisoCelular" role="dialog" aria-label="Aviso"><div class="caixa"><b>Use em um computador</b><span>O Gerador de APR e PO foi feito para a tela do computador. No celular as páginas ficam cortadas.</span><button type="button" onclick="this.closest('#avisoCelular').classList.add('fechado')">Continuar mesmo assim</button></div></div>
-<input type="file" id="abrirArquivo" accept=".json,.docx,.xlsx,.xls,application/json,application/vnd.ms-excel,application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" hidden>
+<input type="file" id="abrirArquivo" accept=".docx,.xlsx,.xls,application/vnd.ms-excel,application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" hidden>
 
 <script>
 // dica com o texto inteiro nos campos cortados com "…" (07/11/2026)
@@ -3386,7 +3386,7 @@ function renderEditor() {
         el('button', {class: 'bt-menu', title: 'Menu', onclick: ev => { ev.stopPropagation(); ev.currentTarget.parentNode.classList.toggle('aberto'); }}, '☰ Menu'),
         el('div', {class: 'lista-menu'}, (abaAtual === 'apr' ? APR.menu() : [
           ['Novo PO', novoPO, 'Começar um PO novo'],
-          ['Abrir', abrirPO, 'Abrir um PO em Word (ou Excel / .po.json antigo) (Ctrl+O)'],
+          ['Abrir', abrirPO, 'Abrir um PO em Word (ou Excel) (Ctrl+O)'],
           ['Salvar como', () => salvarPO(true), 'Escolher onde salvar (Ctrl+Shift+S)'],
           null,
           ['Exportar PDF', () => conferirPO(emitirPDF), 'Abre a impressão para salvar em PDF', 'exp pdf'],
@@ -3446,7 +3446,7 @@ function conferirPO(exportar) {
 
 // ---------------- arquivo ----------------
 // o PO é salvo em Word (.docx, o mesmo do "Exportar Word"), com os dados do gerador guardados dentro dele (customXml);
-// Word aberto/salvo: o "Salvar" grava nele; documento novo pede o local. O .po.json antigo ainda abre, só para passar para Word.
+// Word aberto/salvo: o "Salvar" grava nele; documento novo pede o local.
 let arquivo = null;        // FileSystemFileHandle (Edge/Chrome)
 let nomeAtual = '';        // nome do arquivo atual, para mostrar
 let nomeOrigem = '';       // Word/Excel feito fora do gerador que foi aberto como PO novo (só para mostrar na barra)
@@ -3454,7 +3454,7 @@ let alterado = false, carregando = false, salvoAs = '';
 const poAlterado = () => alterado;   // usado pela conferência (aba APR) ao fechar
 const TIPO_DOCX = 'application/vnd.openxmlformats-officedocument.wordprocessingml.document';
 const TIPOS_ARQ = [{description: 'Documento do Word', accept: {[TIPO_DOCX]: ['.docx']}}];
-// o "Salvar" só grava por cima de um .docx (um .po.json antigo guardado no rascunho pede o local de novo)
+// o "Salvar" só grava por cima de um .docx (outro arquivo guardado no rascunho pede o local de novo)
 const arquivoWord = () => arquivo && /\.docx$/i.test(arquivo.name || '') ? arquivo : null;
 // mensagem de erro ao gravar (também usada pela APR): o caso mais comum é o arquivo aberto no Word/Excel
 const erroGravar = e => /NoModificationAllowed|InvalidState|NotReadable/.test(e.name) ? 'o arquivo está aberto em outro programa (Excel/Word). Feche-o e salve de novo.' : erroAmigavel(e);
@@ -3467,7 +3467,7 @@ function mostrarArquivo() {
   linhaStatus(s, nomeAtual || (nomeOrigem ? 'Aberto de ' + nomeOrigem : 'PO novo, sem arquivo'), estado, !!(nomeAtual || nomeOrigem));
 }
 // linha "<arquivo> – salvo 16:26" numa linha só (APR e PO), curta para caber ao lado de ↶ ↷: se não couber, o "…"
-// fica no meio do nome; o fim do nome (_Rev02.po.json) e o "salvo ..." aparecem sempre; o texto inteiro fica na dica do mouse
+// fica no meio do nome; o fim do nome (_Rev02.docx) e o "salvo ..." aparecem sempre; o texto inteiro fica na dica do mouse
 function linhaStatus(s, texto, fim, ehArquivo) {
   const corte = ehArquivo ? Math.max(1, texto.length - 14) : texto.length;
   s.title = texto + fim;
@@ -3508,7 +3508,7 @@ async function abrirPO() {
   try {
     // id: o navegador lembra a pasta do último PO aberto e volta nela
     const [h] = await window.showOpenFilePicker({id: 'abrir-po', multiple: false, types: [
-      {description: 'PO em Word (ou Excel / .po.json antigo)', accept: {[TIPO_DOCX]: ['.docx'], 'application/json': ['.json'], 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet': ['.xlsx'], 'application/vnd.ms-excel': ['.xls']}}]});
+      {description: 'PO em Word (ou Excel)', accept: {[TIPO_DOCX]: ['.docx'], 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet': ['.xlsx'], 'application/vnd.ms-excel': ['.xls']}}]});
     await abrirArquivoEscolhido(await h.getFile(), h);
   } catch (e) {
     if (e.name !== 'AbortError') alert('Esse arquivo não é um PO do gerador.');
@@ -3557,7 +3557,6 @@ async function herdarOriginais(novo, guardado) {
 }
 // Word salvo pelo gerador: abre com os dados guardados dentro dele e o "Salvar" grava nele de novo.
 // Word editado fora do gerador: pergunta qual versão usar. Outro Word/Excel passa pela importação e abre como novo.
-// .po.json (formato antigo) ainda abre, como documento novo: o "Salvar" grava em Word.
 async function abrirArquivoEscolhido(f, handle) {
   // APR em Excel (.xlsx ou .xls antigo) vai para a aba APR
   if (/\.xlsx?$/i.test(f.name) && typeof APR !== 'undefined' && await APR.ehAPR(f)) { await APR.abrirArquivo(f, handle); return; }
@@ -3585,12 +3584,8 @@ async function abrirArquivoEscolhido(f, handle) {
     else mostrarAvisosImportacao(f.name, r.avisos, r.doc.etapas.length);
     return;
   }
-  const txt = await f.text();
-  let bruto = null; try { bruto = JSON.parse(txt); } catch (e) {}
-  if (bruto && bruto.tipo === 'apr' && typeof APR !== 'undefined') { APR.abrirDados(bruto, null, f.name); return; }
-  const d = lerPO(txt);
-  definirArquivo(null, ''); nomeOrigem = f.name; carregarDoc(d); alterado = true; mostrarArquivo();
-  aviso('Aberto: ' + f.name + ' (formato antigo). Use "Salvar" para gravar o PO em Word.');
+  // 07/11/2026: os arquivos .json antigos não são mais usados
+  alert('Esse arquivo não é um PO nem uma APR. Abra um PO em Word (.docx) ou uma APR em Excel (.xlsx).');
 }
 $('#abrirArquivo').addEventListener('change', async ev => {
   const f = ev.target.files[0]; ev.target.value = '';

@@ -1,6 +1,6 @@
 // Gerador de APR (Análise Preliminar de Riscos), na aba "APR" do gerador.
 // - A APR é um documento próprio, salvo em Excel (Salvar / Abrir / Salvar como, como o PO): o mesmo Excel do
-//   "Exportar Excel", com a APR inteira guardada numa parte oculta (customXml). O .apr.json antigo ainda abre.
+//   "Exportar Excel", com a APR inteira guardada numa parte oculta (customXml).
 // - Prévia igual ao Excel exportado: mesmas colunas, alturas, páginas, logotipo, cabeçalho repetido e rodapé.
 // - Exporta Excel (no "APR.XX.000 - Modelo Padrão", embutido em recursos/modelo_apr.js) e PDF (impressão da prévia).
 // - Abre APR antiga em Excel (.xlsx ou .xls antigo, via recursos\xls.js): colunas achadas pelos títulos.
@@ -34,7 +34,7 @@ const APR = (() => {
     const b = novaAPR();
     d.tipo = 'apr'; d.versao = 1;
     d.cab = Object.assign(b.cab, d.cab || {});
-    // .apr.json antigo (método na etapa): o método da etapa passa para cada perigo dela que não tem o seu
+    // APR antiga (método na etapa): o método da etapa passa para cada perigo dela que não tem o seu
     d.etapas = (d.etapas || []).map(e => {
       const mEt = (e.metodo || '').trim();
       const ne = Object.assign(novaEtapa(), e, {
@@ -335,7 +335,7 @@ const APR = (() => {
     definirArquivo(null, ''); carregar(novaAPR());
   }
   // "Salvar": o mesmo Excel do "Exportar Excel", com a APR inteira guardada dentro dele (guardarDados).
-  // Só grava por cima de um .xlsx (um .apr.json antigo guardado no rascunho pede o local de novo);
+  // Só grava por cima de um .xlsx (outro arquivo guardado no rascunho pede o local de novo);
   // APR nova: escolhe o local ANTES de montar o Excel (o navegador só abre a janela logo depois do clique).
   const TIPOS_XLSX = [{description: 'Planilha do Excel', accept: {'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet': ['.xlsx']}}];
   const arquivoExcel = () => arquivo && /\.xlsx$/i.test(arquivo.name || '') ? arquivo : null;
@@ -370,15 +370,15 @@ const APR = (() => {
     let f, h = null;
     try {
       if (window.showOpenFilePicker) {
-        [h] = await window.showOpenFilePicker({id: 'abrir-apr', types: [{description: 'APR em Excel (ou .apr.json antigo)', accept: {'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet': ['.xlsx'], 'application/vnd.ms-excel': ['.xls'], 'application/json': ['.json']}}]});
+        [h] = await window.showOpenFilePicker({id: 'abrir-apr', types: [{description: 'APR em Excel', accept: {'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet': ['.xlsx'], 'application/vnd.ms-excel': ['.xls']}}]});
         f = await h.getFile();
-      } else f = await new Promise(ok => { const i = el('input', {type: 'file', accept: '.xlsx,.xls,.json', onchange: () => ok(i.files[0])}); i.click(); });
+      } else f = await new Promise(ok => { const i = el('input', {type: 'file', accept: '.xlsx,.xls', onchange: () => ok(i.files[0])}); i.click(); });
     } catch (e) { return; }
     if (f) await abrirArquivo(f, h, true);
   }
   // Excel salvo pelo gerador: abre com a APR guardada dentro dele e o "Salvar" grava nele de novo.
   // Excel salvo pelo gerador e depois mexido no Excel: pergunta qual versão usar. Outra APR em Excel (.xlsx/.xls)
-  // passa pela leitura da APR antiga e abre como APR nova (sem arquivo). .apr.json antigo: abre só para passar para Excel.
+  // passa pela leitura da APR antiga e abre como APR nova (sem arquivo).
   async function abrirArquivo(f, h, jaConfirmou) {
     if (!jaConfirmou && alterado && !(await perguntar('Abrir outra APR? As alterações não salvas da APR serão perdidas.', {sim: 'ABRIR OUTRA', titulo: 'ABRIR APR'}))) return;
     if (/\.xlsx?$/i.test(f.name)) {
@@ -402,19 +402,7 @@ const APR = (() => {
       aviso(g ? `APR lida da planilha: ${qt}. Confira e use "Salvar".` : `APR lida: ${qt}. Use "Salvar" para gravar a APR em Excel.`);
       return;
     }
-    let d;
-    try { d = JSON.parse(await f.text()); } catch (e) { alert('Esse arquivo não é uma APR do gerador.'); return; }
-    abrirDados(d, null, f.name);
-  }
-  // .apr.json (formato antigo): abre como APR sem arquivo; o "Salvar" grava em Excel
-  function abrirDados(d, h, nome) {
-    if (!d || d.tipo !== 'apr' || !Array.isArray(d.etapas)) {
-      alert(d && d.cab && Array.isArray(d.etapas) ? 'Esse arquivo é um PO. Abra na aba PO.' : 'Esse arquivo não é uma APR do gerador.');
-      return;
-    }
-    if (abaAtual !== 'apr') trocarAba('apr');
-    definirArquivo(null, ''); nomeOrigem = nome || ''; carregar(d); alterado = true; mostrarArquivo();
-    aviso('Aberto: ' + nome + ' (formato antigo). Use "Salvar" para gravar a APR em Excel.');
+    alert('Esse arquivo não é uma APR. Abra uma APR em Excel (.xlsx ou .xls).');
   }
   async function iniciar() {
     if (window.DOC_INICIAL) return;
@@ -1762,7 +1750,7 @@ const APR = (() => {
   function menu() {
     return [
       ['Nova APR', nova, 'Começar uma APR nova'],
-      ['Abrir', abrir, 'Abrir uma APR em Excel (ou .apr.json antigo) (Ctrl+O)'],
+      ['Abrir', abrir, 'Abrir uma APR em Excel (Ctrl+O)'],
       ['Salvar como', () => salvar(true), 'Escolher onde salvar (Ctrl+Shift+S)'],
       null,
       ['Exportar PDF', pdf, 'Abre a impressão para salvar a APR em PDF', 'exp pdf'],
@@ -2762,7 +2750,7 @@ input.cf2-ed{padding:0 10px}textarea.cf2-ed{padding:6px 10px;resize:none;overflo
 `));
 
   setTimeout(iniciar, 0);
-  return {montarTabela, _lerPlanilhas: lerPlanilhas, alinharEtapas, mudou, restaurar, editor, previa, cliquePrevia, menu, salvar, abrir, abrirArquivo, abrirDados, nova, pdf, exportar, gerarExcel, ehAPR, lerExcel, puxarDoPO, abrirConferencia, importarParaPO, histParaPO, compararDoPO, pendenciasPO,
+  return {montarTabela, _lerPlanilhas: lerPlanilhas, alinharEtapas, mudou, restaurar, editor, previa, cliquePrevia, menu, salvar, abrir, abrirArquivo, nova, pdf, exportar, gerarExcel, ehAPR, lerExcel, puxarDoPO, abrirConferencia, importarParaPO, histParaPO, compararDoPO, pendenciasPO,
     validar, validarPO, relatorio, situacao, frasesPO, sugestoes, popupPO, nomeAPR, mostrarArquivo, alterado: () => alterado,
     get doc() { return apr; }, set doc(d) { apr = normalizar(d); }, get conf() { return conf; }};
 })();

@@ -39,8 +39,7 @@ SUMÁRIO
   PO × PD sai com a cor da matriz) e as Medidas de controle (uma por linha). O Método sai como PO.<nº> (pode ser
   trocado no cabeçalho, ou por perigo no campo "Método / Instrução de Segurança" de cada perigo, depois dos
   EPI's; vazio = o do cabeçalho). Na prévia, no Excel e no PDF, perigos seguidos da mesma etapa com o mesmo
-  método ficam numa célula só (como EPC's e EPI's). APR .apr.json antiga (método por etapa): ao abrir, o método
-  da etapa passa para cada perigo dela. O Controle de revisão define revisão e data.
+  método ficam numa célula só (como EPC's e EPI's). O Controle de revisão define revisão e data.
 - HISTÓRICO ENTRE APR E PO: embaixo do "+ REVISÃO", na APR o botão "IMPORTAR DO PO" copia o Histórico de
   revisões do PO para o Controle de revisão; no PO o botão "IMPORTAR DA APR" faz o contrário. Copia item por item
   Motivo/Descrição, Data e Responsável (pede confirmação antes de trocar). Na linha 0, "Criação do P.O." vira
@@ -252,9 +251,6 @@ SUMÁRIO
   "SALVAR" grava nele de novo. Se alguém mexeu no arquivo direto no Word/Excel, o gerador avisa e pergunta:
   "USAR O DO WORD/EXCEL" (lê o que está escrito agora; na APR as ligações do comparador continuam nas etapas e
   perigos que não mudaram) ou "USAR O DO GERADOR" (como o gerador salvou da última vez, sem a edição de fora).
-- Arquivos antigos .po.json e .apr.json ainda abrem, só para passar para o formato novo: abra e use "SALVAR"
-  (ele pergunta onde gravar o .docx/.xlsx). O .json antigo não é apagado nem alterado.
-- O Word salvo fica maior que o .po.json antigo (as fotos vão no documento e nos dados escondidos).
 - RASCUNHO AUTOMÁTICO: o gerador guarda no navegador, sozinho, o PO e a APR que estão abertos. Se a página fechar
   com alterações não salvas, ao abrir de novo ele pergunta: "RECUPERAR" ou "COMEÇAR NOVO". As fotos do rascunho
   são guardadas uma vez só (não a cada pausa na digitação), para o gerador não ficar lento em PO com muitas fotos.
