@@ -94,8 +94,33 @@ const APR = (() => {
   // sem ligar para pontuação, maiúsculas e o número "1 - "; havendo "1 -/2 -/3 -", vale a do PD da APR
   // (ou a de PD mais próximo). Texto diferente continua como está e aparece "fora da tabela".
   const chavePerigo = s => N(String(s || '').replace(/^\s*\d\s*-\s*/, '')).replace(/[^a-z0-9]+/g, ' ').trim();
+  // "trocas seguras" da revisão de perigos das APRs (planilha "Revisão de perigos - responder", 26/10/2026): texto antigo ->
+  // perigo da lista (o nº 1/2/3 sai pelo PD). Os duvidosos (Batida Contra, Atropelamento...) não entram: ficam fora da lista
+  const TROCAS_SEGURAS = {
+    'Ruído': 'Exposição ao Ruído',
+    'Contato com material cortante ou perfurantes': 'Contato com material cortante ou perfurante.',
+    'Inalação de aerosdisperssoides': 'Inalação de aerodispersoides.', 'Inalação de aerodisperssoides': 'Inalação de aerodispersoides.',
+    'Inalação de aerosdispersoides': 'Inalação de aerodispersoides.',
+    'Queda, esbarrões e tropeços': 'Quedas, Esbarrões e Tropeços',
+    'Exposição a condições climaticas adversas (exposição ao sol, frio, chuva)': 'Exposição a condições climáticas adversas (exposição ao sol, frio, chuva e etc)',
+    'Exposição a Radiação Não- Ionizante': 'Exposição à Radiação Não Ionizante',
+    'Projeção ou Respingo de Metal Líquido': 'Projeção, Respingo ou Transbordo de Metal Líquido',
+    'Contato com partes quentes': 'Exposição ao Calor e contato com partes quentes',
+    'Postura Inadequada no Trabalho': 'Postura Inadequada no Trabalho e Esforço físico excessivo',
+    'Postura Inadequada no Trabalho e Esforço fisico excessivo': 'Postura Inadequada no Trabalho e Esforço físico excessivo',
+    'Projeção Fagulhas, Cavacos ou Particulas Volantes': 'Projeção de Fagulhas, Cavacos ou Partículas Volantes.',
+    'Queda de materiais': 'Queda de Materiais e tombamento.', 'Queda de materiais e tombamentos': 'Queda de Materiais e tombamento.',
+    'Quedas de Materiais e Tombamento': 'Queda de Materiais e tombamento.', 'Queda de materiais, Tombamento': 'Queda de Materiais e tombamento.',
+    'Tombamento': 'Queda de Materiais e tombamento.',
+    'Queda de materiais, Batida Contra': 'Queda de materiais, Tombamento, batida Contra e Atingido por Aprisionamento entre partes.',
+    'Queda de materiais, Tombamento, Batida contra': 'Queda de materiais, Tombamento, batida Contra e Atingido por Aprisionamento entre partes.',
+    'Movimentação de carga, Queda de materiais, Tombamento, Batida contra, Aprisionamento entre partes': 'Queda de materiais, Tombamento, batida Contra e Atingido por Aprisionamento entre partes.',
+  };
+  let trocas = null;
   function perigoDaTabela(perigo, pd) {
-    const k = chavePerigo(perigo);
+    if (!trocas) { trocas = new Map(); for (const [a, b] of Object.entries(TROCAS_SEGURAS)) trocas.set(chavePerigo(a), chavePerigo(b)); }
+    let k = chavePerigo(perigo);
+    if (k && !TAB.some(r => chavePerigo(r.perigo) === k) && trocas.has(k)) k = trocas.get(k);
     const cands = k ? TAB.filter(r => chavePerigo(r.perigo) === k) : [];
     if (!cands.length) return null;
     const alvo = numero(pd);

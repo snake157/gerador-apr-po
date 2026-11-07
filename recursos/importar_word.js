@@ -513,6 +513,19 @@ const IMPORTAR = (() => {
     let [x, y] = [pal(a), pal(b)];
     return x.size > 0 && x.size === y.size && [...x].every(w => y.has(w));
   }
+  // nome antigo (escrito na imagem ou embaixo dela) -> pictograma atual da biblioteca, pelas tabelas de nomes antigos
+  let mapaAntigos = null;
+  function nomePeloAntigo(rotulo, tipo) {
+    if (!rotulo) return '';
+    const k = t => norm(t).replace(/[^A-Z0-9]+/g, ' ').trim();
+    if (!mapaAntigos) {
+      mapaAntigos = {perigo: new Map(), epi: new Map()};
+      for (const [a, b] of Object.entries(window.PERIGOS_NOMES_ANTIGOS || {})) mapaAntigos.perigo.set(k(a), b);
+      for (const [a, b] of Object.entries(window.EPIS_NOMES_ANTIGOS || {})) mapaAntigos.epi.set(k(a), b);
+    }
+    const n = mapaAntigos[tipo] && mapaAntigos[tipo].get(k(rotulo));
+    return n && (tipo === 'perigo' ? BIB.perigos : listaEpis()).some(it => it.nome === n) ? n : '';
+  }
   async function reconhecer(src, tipo) {
     const vs = await assinatura(src, true);
     // 1º: imagens que você já trocou antes pelo pictograma certo, e as dos POs de treino
@@ -526,6 +539,10 @@ const IMPORTAR = (() => {
         const k = norm(ap.rotulo).replace(/[^A-Z0-9]+/g, ' ').trim();
         const iguais = k ? (tipo === 'perigo' ? BIB.perigos : listaEpis()).filter(it => norm(rotuloPadrao(it.nome)).replace(/[^A-Z0-9]+/g, ' ').trim() === k) : [];
         if (iguais.length === 1) return {nome: iguais[0].nome, rotulo: ap.rotulo, d: ap.d};
+        // nome escrito na imagem antiga ("Queda de materiais", "Tombamento", "Chuvas e raios") que já tem pictograma novo
+        // na tabela de nomes antigos (perigos_nomes_antigos.js): usa esse (07/11/2026, teste com os POs antigos)
+        const antigo = nomePeloAntigo(ap.rotulo, tipo);
+        if (antigo) return {nome: antigo, rotulo: ap.rotulo, d: ap.d};
         const lib = await reconhecerNaBiblioteca(vs, tipo, src);
         return lib && ap.rotulo && nomeBate(ap.rotulo, lib.nome) ? {nome: lib.nome, rotulo: ap.rotulo, d: lib.d} : ap;
       }
@@ -559,6 +576,8 @@ const IMPORTAR = (() => {
     const k = t => norm(t).replace(/[^A-Z0-9]+/g, ' ').trim(), kr = k(rotulo);
     const igualRotulo = nome => k(rotuloPadrao(nome)) === kr || k(nome) === kr;
     if (r && r.nome && igualRotulo(r.nome)) return r;
+    const antigo = nomePeloAntigo(rotulo, tipo);
+    if (antigo && (!r || !r.nome)) return {nome: antigo, d: r ? r.d : 0};
     const vs = await assinatura(src, true);
     if (!vs || !vs.length) return r;
     const ord = (await assinaturasBiblioteca(tipo)).map(b => ({b, c: Math.max(...vs.map(v => correlacao(v, b.a)))})).sort((x, y) => y.c - x.c);
@@ -656,7 +675,20 @@ const IMPORTAR = (() => {
   }
   // EPI escrito só com o nome (sem imagem): pictograma da biblioteca com o mesmo nome, se houver um só
   const PAL_EPI = s => palavrasNome(String(s).replace(/\bPFF\s*-?\s*(II|ll|2)\b/gi, 'PFF2'));
+  // nomes que os POs e APRs antigos usam para EPIs da biblioteca (teste com os documentos antigos, 07/11/2026)
+  const EPI_APELIDOS = [
+    [/^CREME\b/, 'Creme Protetivo'],
+    [/^RESPIRADOR (DESCARTAVEL )?PFF ?(2|II|LL)$/, 'Respirador Descartável PFF2'],
+    [/REFLETIV/, 'Colete Refletivo'],
+    [/^CINTO DE SEGURANCA$/, 'Cinto de segurança obrigatório'],
+    [/^CINTO (DE SEGURANCA )?(TIPO )?PARA ?QUEDISTA$/, 'Cinto de segurança Paraquedista'],
+    [/^OCULOS (DE )?(PROTECAO|SEGURANCA)$/, 'Óculos de Segurança'],
+    [/^LUVA (DE MALHA )?(COM PALMA )?(EM )?PU$/, 'Luva de Malha com Palma em PU'],
+  ];
   function epiPorNome(texto) {
+    const tn = norm(texto).replace(/[^A-Z0-9]+/g, ' ').trim();
+    const ap = EPI_APELIDOS.find(([re]) => re.test(tn));
+    if (ap && listaEpis().some(it => it.nome === ap[1])) return ap[1];
     const t = PAL_EPI(texto);
     if (!t.size) return '';
     let melhor = [], nota = 0;
@@ -666,7 +698,7 @@ const IMPORTAR = (() => {
       const comum = [...b].filter(w => t.has(w)).length;
       // todas as palavras do nome da biblioteca estão no texto ("Capacete" em "Capacete de segurança"), ou todas as do
       // texto estão no nome da biblioteca ("Respirador PFF2" ~ "Respirador descartável PFF2"); empate = não dá para saber
-      const s = comum === b.size ? 1 + comum / 10 : comum === t.size ? comum / b.size : 0;
+      const s = comum === b.size ? 1 + comum / 10 : comum === t.size && comum / b.size >= 0.6 ? comum / b.size : 0;   // "Uniforme" sozinho não é "Uniforme NR10"
       if (s > nota + 1e-9) { nota = s; melhor = [it.nome]; } else if (s && Math.abs(s - nota) < 1e-9) melhor.push(it.nome);
     }
     return melhor.length === 1 ? melhor[0] : '';
