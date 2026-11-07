@@ -69,7 +69,8 @@ const ENVIOS = (() => {
     const j = el('div', {class: 'janela envio ' + classe, onclick: ev => ev.stopPropagation()},
       el('header', {}, el('b', {}, titulo)), corpo, el('div', {class: 'janela-bts'}, ...botoes(fechar)));
     j.style.setProperty('--env-cor', cor());
-    m.replaceChildren(j); m.onclick = fechar; m.hidden = false;
+    // 07/11/2026: clicar fora não fecha (para não perder o que foi preenchido); fecha pelo botão ou pelo Esc
+    m.replaceChildren(j); m.onclick = null; m.hidden = false;
     return fechar;
   }
 
@@ -327,6 +328,9 @@ const ENVIOS = (() => {
     ['ENVIAR PICTOGRAMA', enviarPictograma, 'Mandar um pictograma de perigo ou de EPI para todos (fica aguardando aprovação)'],
     ['ENVIAR PERIGO', enviarPerigo, 'Mandar um perigo novo para a tabela de perigos (fica aguardando aprovação)'],
     [rotuloAprovar(), aprovarEnvios, 'Aprovar ou recusar os envios (só com a senha de aprovador)'],
+    ['ADMINISTRADOR', () => ADMIN.abrir(), 'Incluir, editar e excluir perigos da tabela e pictogramas de perigo e de EPI (só com a senha de aprovador)'],
   ];
-  return {menu, enviarPictograma, enviarPerigo, aprovarEnvios, API};
+  // usado pelo ADMINISTRADOR (recursos/administrador.js)
+  const ajuda = {chamar, janela, pedirSenha, guardado, guardar, abrirImagem, miniatura, lerBase64, selo, div, PD, N};
+  return {menu, enviarPictograma, enviarPerigo, aprovarEnvios, API, ajuda};
 })();

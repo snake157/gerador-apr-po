@@ -12,6 +12,8 @@
 //   /api/aprovar    {senha, id, perigo?, risco?, pd?, obs?}   (perigo novo: o aprovador corrige e escolhe o PD)
 //                   pictograma: {senha, id, tipo?, nome?, modo?: "substituir" | "novo"}
 //   /api/recusar    {senha, id}
+//   /api/administrar {senha, tabela?: [{perigo, risco, pd}], renomeadosTabela?: {antigo: novo},
+//                    pictos?: [{lista: "perigos"|"epis1", acao: "novo"|"editar"|"excluir", nome, novoNome?, mini?, arquivo?, nomeArquivo?}]}
 //
 // Configurar no Cloudflare (Settings > Variables and Secrets), como "Secret":
 //   GITHUB_TOKEN  chave do GitHub que só mexe neste repositório (Contents: Read and write)
@@ -99,13 +101,7 @@ function colocarNaBiblioteca(texto, lista, nome, img) {
   return { texto: texto.slice(0, fim) + (fim === abre ? '' : ',') + item + texto.slice(fim), substituiu: false };
 }
 
-// ---------- tabela de perigos: acrescenta uma linha no perigos_riscos.js ----------
-function colocarNaTabelaJs(texto, linha) {
-  const fim = texto.lastIndexOf('];');
-  if (fim < 0 || !texto.includes('window.TABELA_PERIGOS = [')) throw new Error('perigos_riscos.js com formato inesperado');
-  const vazio = /\[\s*$/.test(texto.slice(0, fim));
-  return texto.slice(0, fim) + (vazio ? '' : ',') + JSON.stringify(linha) + texto.slice(fim);
-}
+// ---------- tabela de perigos (perigos_riscos.js) ----------
 const perigosDaTabela = texto => {
   const ini = texto.indexOf('window.TABELA_PERIGOS = ') + 24;
   return JSON.parse(texto.slice(ini, texto.lastIndexOf(';')));
@@ -162,31 +158,80 @@ function gravarZip(arqs) {   // sem compressão, como o Exportar Excel do gerado
   return out;
 }
 const escXml = s => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
-// copia a última linha da planilha (mesma altura e estilos) com os dados do perigo novo
-function colocarNaPlanilha(xml, l) {
-  const fimDados = xml.lastIndexOf('</sheetData>');
-  const ini = xml.lastIndexOf('<row ', fimDados);
-  if (fimDados < 0 || ini < 0) throw new Error('a planilha de perigos não tem linhas');
-  const ultima = xml.slice(ini, fimDados);
-  const n = Number((ultima.match(/^<row [^>]*\br="(\d+)"/) || [])[1]);
-  if (!n) throw new Error('a planilha de perigos tem um formato inesperado');
-  const nova = n + 1;
-  const estilo = col => (ultima.match(new RegExp(`<c r="${col}${n}"[^>]*?\\ss="(\\d+)"`)) || [])[1];
-  const attrs = (ultima.match(/^<row ([^>]*?)\/?>/) || [, ''])[1].replace(/\br="\d+"/, `r="${nova}"`).replace(/\s*spans="[^"]*"/, '');
-  const sa = col => estilo(col) ? ` s="${estilo(col)}"` : '';
-  const txt = (col, v) => `<c r="${col}${nova}"${sa(col)} t="inlineStr"><is><t xml:space="preserve">${escXml(v)}</t></is></c>`;
-  const linha = `<row ${attrs}>` + txt('A', l.perigo) + txt('B', l.risco) + `<c r="C${nova}"${sa('C')}><v>${l.pd}</v></c>` +
-    (l.obs ? txt('D', l.obs) : `<c r="D${nova}"${sa('D')}/>`) + '</row>';
-  return (xml.slice(0, fimDados) + linha + xml.slice(fimDados)).replace(/<dimension ref="([A-Z]+\d+):([A-Z]+)\d+"\/>/, `<dimension ref="$1:$2${nova}"/>`);
+// refaz as linhas da 1ª aba a partir da tabela (Perigo, Risco, PD), com os estilos do cabeçalho e da 1ª linha de dados;
+// a antiga coluna D (Observação) sai (07/11/2026). Linha que já existia mantém a altura; nova ganha altura pelo tamanho do texto.
+function planilhaXml(xml, linhas) {
+  const ini = xml.indexOf('<sheetData>'), fim = xml.indexOf('</sheetData>');
+  if (ini < 0 || fim < 0) throw new Error('a planilha de perigos tem um formato inesperado');
+  const rows = [...xml.slice(ini, fim).matchAll(/<row [^>]*?(?:\/>|>[\s\S]*?<\/row>)/g)].map(m => m[0]);
+  const cab = rows.find(r => /\br="1"/.test(r)), mod = rows.find(r => /\br="2"/.test(r));
+  if (!cab || !mod) throw new Error('a planilha de perigos não tem cabeçalho');
+  const txtCel = c => { const m = c.match(/<t[^>]*>([\s\S]*?)<\/t>/); return m ? m[1].replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&#(\d+);/g, (_, n) => String.fromCodePoint(+n)).replace(/&amp;/g, '&') : ''; };
+  const alturas = {};
+  for (const r of rows) { const a = (r.match(/<c r="A\d+"[^>]*>[\s\S]*?<\/c>/) || [''])[0]; const ht = (r.match(/\bht="([\d.]+)"/) || [])[1]; if (a && ht) alturas[txtCel(a).trim()] = ht; }
+  const est = col => (mod.match(new RegExp(`<c r="${col}2"[^>]*?\\ss="(\\d+)"`)) || [])[1];
+  const sa = col => est(col) ? ` s="${est(col)}"` : '';
+  const semD = cab.replace(/<c r="D1"[^>]*?(?:\/>|>[\s\S]*?<\/c>)/, '');
+  const extra = (mod.match(/^<row ([^>]*?)>/) || [, ''])[1].replace(/\s*\br="\d+"/, '').replace(/\s*\bht="[^"]*"/, '').replace(/\s*\bcustomHeight="[^"]*"/, '').replace(/\s*\bspans="[^"]*"/, '');
+  const txt = (col, n, v) => `<c r="${col}${n}"${sa(col)} t="inlineStr"><is><t xml:space="preserve">${escXml(v)}</t></is></c>`;
+  const corpo = linhas.map((l, k) => {
+    const n = k + 2;
+    const ht = alturas[l.perigo] || String(Math.max(28.5, 15 * Math.max(Math.ceil(l.perigo.length / 24), Math.ceil(l.risco.length / 30)) + 6));
+    return `<row r="${n}" ht="${ht}" customHeight="1"${extra ? ' ' + extra : ''}>` + txt('A', n, l.perigo) + txt('B', n, l.risco) + `<c r="C${n}"${sa('C')}><v>${l.pd}</v></c></row>`;
+  }).join('');
+  return xml.slice(0, ini) + '<sheetData>' + semD + corpo + xml.slice(fim);
 }
-async function planilhaComPerigo(bytes, linha) {
+function arrumarXml(xml, linhas) {
+  return planilhaXml(xml, linhas).replace(/<col [^>]*\bmin="4"[^>]*\/>/, '').replace(/<dimension ref="[^"]*"\/>/, `<dimension ref="A1:C${linhas.length + 1}"/>`);
+}
+async function planilhaDaTabela(bytes, linhas) {
   const arqs = await lerZip(bytes);
   const aba = arqs.find(a => a.nome === 'xl/worksheets/sheet1.xml');
   if (!aba) throw new Error('a planilha de perigos não tem a primeira aba');
-  aba.dados = new TextEncoder().encode(colocarNaPlanilha(new TextDecoder().decode(aba.dados), linha));
+  aba.dados = new TextEncoder().encode(arrumarXml(new TextDecoder().decode(aba.dados), linhas));
   return gravarZip(arqs);
 }
+const textoTabelaJs = linhas => '// Tabela de Perigos e Riscos da APR (perigo, risco / consequência e potencial de dano).\n' +
+  `// Gravada pelo gerador online (${new Date().toLocaleDateString('pt-BR', { timeZone: 'America/Sao_Paulo' })}): Menu > ADMINISTRADOR ou APROVAR ENVIOS.\n` +
+  'window.TABELA_PERIGOS = ' + JSON.stringify(linhas.map(l => ({ perigo: l.perigo, risco: l.risco, pd: l.pd }))) + ';\n';
+// nomes antigos -> novos (APRs e POs antigos passam para o nome novo ao abrir); também atualiza quem apontava para o nome antigo
+function colocarRenomeados(texto, variavel, mapa) {
+  if (!Object.keys(mapa).length) return texto;
+  return texto.replace(/\s*$/, '\n') + `// ${new Date().toISOString().slice(0, 10)}: renomeados no ADMINISTRADOR\n` +
+    `(function (m, n) { for (const k in m) if (n[m[k]]) m[k] = n[m[k]]; Object.assign(m, n); })(window.${variavel} = window.${variavel} || {}, ${JSON.stringify(mapa, null, 0)});\n`;
+}
+
 const base64 = bytes => { let s = ''; for (let i = 0; i < bytes.length; i += 0x8000) s += String.fromCharCode(...bytes.subarray(i, i + 0x8000)); return btoa(s); };
+
+// acha o item {"nome":...,"img":...} de uma lista da biblioteca; devolve [início, fim] no texto, ou null
+function itemNaBiblioteca(texto, lista, nome) {
+  const ini = texto.indexOf(`"${lista}":[`);
+  if (ini < 0) throw new Error(`a biblioteca não tem a lista ${lista}`);
+  const abre = ini + lista.length + 4, fim = texto.indexOf(']', abre);
+  const antes = `{"nome":${JSON.stringify(nome)},"img":"`;
+  const ja = texto.indexOf(antes, abre);
+  if (ja < 0 || ja > fim) return null;
+  return [ja, texto.indexOf('"}', ja + antes.length) + 2];
+}
+function tirarDaBiblioteca(texto, lista, nome) {
+  const p = itemNaBiblioteca(texto, lista, nome);
+  if (!p) return texto;
+  let [a, b] = p;
+  if (texto[b] === ',') b++; else if (texto[a - 1] === ',') a--;
+  return texto.slice(0, a) + texto.slice(b);
+}
+function trocarNaBiblioteca(texto, lista, nome, novoNome, img) {
+  const p = itemNaBiblioteca(texto, lista, nome);
+  if (!p) throw new Error(`o pictograma "${nome}" não está na biblioteca`);
+  const atual = texto.slice(p[0], p[1]);
+  const imgAtual = atual.slice(atual.indexOf('"img":') + 6, -1);
+  return texto.slice(0, p[0]) + `{"nome":${JSON.stringify(novoNome)},"img":${img ? JSON.stringify(img) : imgAtual}}` + texto.slice(p[1]);
+}
+// perigos_riscos.js + planilha refeitos a partir da tabela
+async function arquivosDaTabela(env, base, linhas) {
+  const xlsx = await lerArquivo(env, TABELA_XLSX, base, true);
+  return [{ caminho: TABELA_JS, texto: textoTabelaJs(linhas) }, { caminho: TABELA_XLSX, base64: base64(await planilhaDaTabela(xlsx, linhas)) }];
+}
 
 // grava vários arquivos no main num commit só; se outro envio entrou no meio, monta de novo e tenta outra vez
 async function gravarNoMain(env, mensagem, montar) {
@@ -197,6 +242,8 @@ async function gravarNoMain(env, mensagem, montar) {
     if (!lista.length) return null;   // nada a gravar (ex.: perigo que já estava na tabela)
     const tree = [];
     for (const a of lista) {
+      if (a.apagar) { tree.push({ path: a.caminho, mode: '100644', type: 'blob', sha: null }); continue; }
+      if (a.sha) { tree.push({ path: a.caminho, mode: '100644', type: 'blob', sha: a.sha }); continue; }   // renomear: mesmo conteúdo
       const blob = await gh(env, 'git/blobs', { method: 'POST', body: JSON.stringify(a.base64 ? { content: a.base64, encoding: 'base64' } : { content: a.texto, encoding: 'utf-8' }) });
       tree.push({ path: a.caminho, mode: '100644', type: 'blob', sha: blob.sha });
     }
@@ -266,7 +313,7 @@ async function aprovar(env, d) {
   const e = p.envio;
   let substituiu = false, linha = null;
   if (e.tipo === 'perigo-novo') {
-    linha = { perigo: limpar(d.perigo ?? e.perigo, 200), risco: limpar(d.risco ?? e.risco, 400), pd: Number(d.pd), obs: limpar(d.obs ?? '', 500) };
+    linha = { perigo: limpar(d.perigo ?? e.perigo, 200), risco: limpar(d.risco ?? e.risco, 400), pd: Number(d.pd) };
     if (!linha.perigo || !linha.risco) return erro('preencha o PERIGO e o RISCO');
     if (![1, 2, 3, 4, 5].includes(linha.pd)) return erro('escolha o PD (1 a 5)');
   }
@@ -284,10 +331,10 @@ async function aprovar(env, d) {
       : `Pictograma de ${tipo === 'perigo' ? 'perigo' : 'EPI'} "${nome}" (enviado por ${e.autor})`,
     async base => {
       if (e.tipo === 'perigo-novo') {
-        const js = await lerArquivo(env, TABELA_JS, base);
-        if (perigosDaTabela(js).some(r => norm(r.perigo) === norm(linha.perigo))) { ja = true; return []; }
-        const xlsx = await lerArquivo(env, TABELA_XLSX, base, true);
-        return [{ caminho: TABELA_JS, texto: colocarNaTabelaJs(js, linha) }, { caminho: TABELA_XLSX, base64: base64(await planilhaComPerigo(xlsx, linha)) }];
+        const tab = perigosDaTabela(await lerArquivo(env, TABELA_JS, base));
+        if (tab.some(r => norm(r.perigo) === norm(linha.perigo))) { ja = true; return []; }
+        const nova = [...tab, linha];
+        return arquivosDaTabela(env, base, nova);
       }
       if (tipo === 'perigo') {
         const tab = perigosDaTabela(await lerArquivo(env, TABELA_JS, base));
@@ -306,6 +353,83 @@ async function aprovar(env, d) {
   if (semNome) return erro(`"${nome}" não está na tabela de perigos; escolha um nome da lista`, 400);
   await apagarPendente(env, e.id, p.meta.sha, `Aprovado: ${nome}`);
   return resposta({ ok: true, commit: sha, substituiu, linha, tipo: e.tipo === 'perigo-novo' ? e.tipo : tipo, nome, mini: e.mini });
+}
+
+// ADMINISTRADOR: grava de uma vez a tabela inteira e as mudanças nos pictogramas (incluir, editar, excluir)
+const falha = msg => Object.assign(new Error(msg), { status: 400 });
+const PASTA_LISTA = { perigos: 'Pictogramas/Perigos', epis1: 'Pictogramas/EPIs' };
+const NOMES_ANTIGOS = 'recursos/perigos_nomes_antigos.js';
+async function administrar(env, d) {
+  const tabela = Array.isArray(d.tabela) ? d.tabela.map(l => ({ perigo: limpar(l.perigo, 200), risco: limpar(l.risco, 400), pd: Number(l.pd) })) : null;
+  if (tabela) {
+    if (!tabela.length) return erro('a tabela de perigos não pode ficar vazia');
+    const vistos = new Set();
+    for (const l of tabela) {
+      if (!l.perigo || !l.risco) return erro('há perigo sem nome ou sem risco');
+      if (![1, 2, 3, 4, 5].includes(l.pd)) return erro(`escolha o PD de "${l.perigo}"`);
+      if (vistos.has(norm(l.perigo))) return erro(`o perigo "${l.perigo}" aparece duas vezes`);
+      vistos.add(norm(l.perigo));
+    }
+  }
+  const pictos = Array.isArray(d.pictos) ? d.pictos : [];
+  const renTabela = d.renomeadosTabela && typeof d.renomeadosTabela === 'object' ? d.renomeadosTabela : {};
+  for (const o of pictos) {
+    if (!PASTA_LISTA[o.lista] || !['excluir', 'editar', 'novo'].includes(o.acao)) return erro('alteração de pictograma inválida');
+    for (const n of [o.nome, o.novoNome]) if (n !== undefined && (!limpar(n, 150) || /[\\/:*?"<>|[\]]/.test(n))) return erro(`nome de pictograma inválido: "${n}"`);
+    if (o.arquivo && (!/^[A-Za-z0-9+/=]+$/.test(o.arquivo) || o.arquivo.length > MAX * 1.37)) return erro(`a imagem de "${o.novoNome || o.nome}" tem mais de 2 MB`);
+    if (o.mini && !/^data:image\/(webp|png|jpeg);base64,[A-Za-z0-9+/=]+$/.test(o.mini)) return erro('miniatura inválida');
+    if (o.acao === 'novo' && (!o.arquivo || !o.mini)) return erro(`falta a imagem de "${o.nome}"`);
+  }
+  if (!tabela && !pictos.length && !Object.keys(renTabela).length) return erro('nenhuma alteração para salvar');
+  const resumo = [tabela ? 'tabela de perigos' : '', pictos.length ? `${pictos.length} pictograma(s)` : ''].filter(Boolean).join(' e ');
+  const sha = await gravarNoMain(env, `ADMINISTRADOR: ${resumo}`, async base => {
+    const out = [];
+    if (tabela) out.push(...await arquivosDaTabela(env, base, tabela));
+    const renPer = {}, renEpi = {};
+    if (pictos.length) {
+      let bib = await lerArquivo(env, BIB, base);
+      const dirs = {};
+      for (const l of Object.keys(PASTA_LISTA)) dirs[l] = (await gh(env, `contents/${caminhoUrl(PASTA_LISTA[l])}?ref=${base}`, { aceitar404: true })) || [];
+      const arquivosDe = (l, nome) => dirs[l].filter(f => f.type !== 'dir' && f.name.replace(/\.[^.]+$/, '') === nome);
+      const existe = (l, nome) => !!itemNaBiblioteca(bib, l, nome);
+      const ext = o => ((o.nomeArquivo || '').match(/\.(png|jpe?g)$/i) || ['.png'])[0].toLowerCase();
+      for (const o of pictos) {
+        const nome = limpar(o.nome, 150), pasta = PASTA_LISTA[o.lista];
+        if (o.acao === 'excluir') {
+          bib = tirarDaBiblioteca(bib, o.lista, nome);
+          for (const f of arquivosDe(o.lista, nome)) out.push({ caminho: `${pasta}/${f.name}`, apagar: true });
+        } else if (o.acao === 'novo') {
+          if (existe(o.lista, nome)) throw falha(`já existe um pictograma "${nome}"`);
+          bib = colocarNaBiblioteca(bib, o.lista, nome, o.mini).texto;
+          out.push({ caminho: `${pasta}/${nome}${ext(o)}`, base64: o.arquivo });
+        } else {
+          const novo = limpar(o.novoNome ?? nome, 150);
+          if (novo !== nome && existe(o.lista, novo)) throw falha(`já existe um pictograma "${novo}"`);
+          bib = trocarNaBiblioteca(bib, o.lista, nome, novo, o.mini || null);
+          const velhos = arquivosDe(o.lista, nome);
+          if (o.arquivo) {
+            for (const f of velhos) out.push({ caminho: `${pasta}/${f.name}`, apagar: true });
+            out.push({ caminho: `${pasta}/${novo}${ext(o)}`, base64: o.arquivo });
+          } else if (novo !== nome) {
+            for (const f of velhos) { out.push({ caminho: `${pasta}/${novo}${f.name.slice(nome.length)}`, sha: f.sha }); out.push({ caminho: `${pasta}/${f.name}`, apagar: true }); }
+          }
+          if (novo !== nome) (o.lista === 'perigos' ? renPer : renEpi)[nome] = novo;
+        }
+      }
+      out.push({ caminho: BIB, texto: bib });
+    }
+    const renTab = {};
+    for (const [a, b] of Object.entries(renTabela)) if (limpar(a, 200) && limpar(b, 200) && a !== b) renTab[limpar(a, 200)] = limpar(b, 200);
+    if (Object.keys(renTab).length + Object.keys(renPer).length + Object.keys(renEpi).length) {
+      let t = await lerArquivo(env, NOMES_ANTIGOS, base);
+      t = colocarRenomeados(t, 'PERIGOS_RENOMEADOS', renTab);
+      t = colocarRenomeados(t, 'PERIGOS_NOMES_ANTIGOS', renPer);
+      t = colocarRenomeados(t, 'EPIS_NOMES_ANTIGOS', renEpi);
+      out.push({ caminho: NOMES_ANTIGOS, texto: t });
+    }
+    return out;
+  });
+  return resposta({ ok: true, commit: sha });
 }
 
 async function recusar(env, d) {
@@ -330,9 +454,10 @@ export async function onRequestPost({ request, env, params }) {
     if (acao === 'pendentes') return await pendentes(env);
     if (acao === 'aprovar') return await aprovar(env, d);
     if (acao === 'recusar') return await recusar(env, d);
+    if (acao === 'administrar') return await administrar(env, d);
     return erro('endereço desconhecido', 404);
   } catch (x) {
-    return erro('não consegui terminar: ' + (x.message || x), 500);
+    return x.status ? erro(x.message, x.status) : erro('não consegui terminar: ' + (x.message || x), 500);
   }
 }
 

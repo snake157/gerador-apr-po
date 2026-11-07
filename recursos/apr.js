@@ -1672,7 +1672,6 @@ const APR = (() => {
         el('span', {class: 'apr-risco', style: nv ? `background:${nv.fundo};color:${nv.cor}` : ''}, r ? `RISCO ${r} – ${nv.nome.toUpperCase()}` : 'RISCO: ESCOLHA PO E PD'))),
       oTab && oTab.pd ? el('div', {class: 'apr-pdtab' + (numero(l.pd) !== oTab.pd ? ' mudou' : '')},
         numero(l.pd) === oTab.pd ? `PD ${oTab.pd} pela tabela.` : `PD da tabela: ${oTab.pd} (alterado para ${numero(l.pd) || '–'}).`,
-        oTab.obs ? el('span', {}, ' Quando muda: ' + oTab.obs) : null,
         numero(l.pd) !== oTab.pd ? el('button', {class: 'btn mini', onclick: () => { l.pd = String(oTab.pd); mudou(true); }}, 'Voltar ao da tabela') : null) : null,
       bloco(l.id + ':medidas', el('div', {class: 'campo'}, el('span', {}, 'Medidas de controle (uma por linha)'),
         campoMedidas(l))));
