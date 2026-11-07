@@ -706,6 +706,10 @@ const IMPORTAR = (() => {
     }
     return melhor.length === 1 ? melhor[0] : '';
   }
+  // texto da coluna de EPIs que é frase de instrução ("Parar o veículo em local adequado", "Saídas de emergência"),
+  // não EPI: só entra o que a biblioteca reconhece ou que tem nome de EPI (07/11/2026, teste com os POs antigos)
+  const PALAVRA_EPI = /\b(LUVA|OCULO|CAPACETE|PROTETOR|PROTECAO|RESPIRADOR|MASCARA|BOTINA|BOTA|CALCADO|AVENTAL|PERNEIRA|MANGOTE|CINTO|TALABARTE|TRAVA|UNIFORME|COLETE|CREME|CAPA|MACACAO|JAQUETA|BLUSAO|TOUCA|CAPUZ|VISEIRA|ABAFADOR|PLUG|PFF|EPI|EPC|SAPATO|CAMISA|CALCA|JUGULAR|LUVAS)/;
+  const pareceEpi = t => !!epiPorNome(t) || PALAVRA_EPI.test(norm(t));
   const nomesEpiTexto = t => t.split(/[\n,;\/]/).map(s => s.replace(/^[\s'"´`.\-–•]+|[\s'"´`.;,]+$/g, '').replace(/\s+/g, ' ')).filter(s => s.length > 1 && !/^N\.?\s*\/?\s*A\.?$/i.test(s));
 
   // "impressão digital" do texto do Word: muda se alguém editar o documento no Word depois de exportado
@@ -1172,7 +1176,9 @@ const IMPORTAR = (() => {
           // se a biblioteca tiver um pictograma com esse nome, com ele; senão fica sem pictograma, para escolher no editor
           if (!srcs.length) {
             if (tipo !== 'epi') continue;
-            const itens = nomesEpiTexto(nomes.join('\n')).map(t => ({nome: epiPorNome(t), rotulo: t.charAt(0).toUpperCase() + t.slice(1)}))
+            const todosT = nomesEpiTexto(nomes.join('\n')), frases = todosT.filter(t => !pareceEpi(t));
+            if (frases.length) avisos.push(`Etapa ${novo.etapas.indexOf(e) + 1} (${e.nome || 'sem nome'}): ${frases.length} frase(s) na coluna de EPIs não são EPI ("${frases[0]}"...) e ficaram de fora.`);
+            const itens = todosT.filter(pareceEpi).map(t => ({nome: epiPorNome(t), rotulo: t.charAt(0).toUpperCase() + t.slice(1)}))
               .filter(it => !e.epis.some(j => norm(j.rotulo) === norm(it.rotulo)));
             e.epis.push(...itens);
             epiTexto += itens.length;
@@ -1187,7 +1193,7 @@ const IMPORTAR = (() => {
           // EPIs escritos na célula que não batem com nenhuma imagem ("Capacete de segurança, luva multitato" ao lado das
           // imagens de botina e óculos): entram também, só com o nome, para não se perderem
           if (tipo === 'epi' && nomes.length && !rotulos.length) {
-            const extra = nomesEpiTexto(nomes.join('\n')).filter(t => !e.epis.some(j => norm(j.rotulo) === norm(t) || (j.nome && (j.nome === epiPorNome(t) || nomeBate(t, j.nome)))))
+            const extra = nomesEpiTexto(nomes.join('\n')).filter(pareceEpi).filter(t => !e.epis.some(j => norm(j.rotulo) === norm(t) || (j.nome && (j.nome === epiPorNome(t) || nomeBate(t, j.nome)))))
               .map(t => ({nome: epiPorNome(t), rotulo: t.charAt(0).toUpperCase() + t.slice(1)}));
             e.epis.push(...extra); epiTexto += extra.length;
           }
