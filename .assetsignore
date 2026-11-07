@@ -1,0 +1,9 @@
+.git
+.github
+functions
+worker.js
+wrangler.jsonc
+.assetsignore
+.nojekyll
+node_modules
+.wrangler
