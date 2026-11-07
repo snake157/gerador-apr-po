@@ -3394,6 +3394,8 @@ function renderEditor() {
           ['Exportar Word', () => conferirPO(() => exportarWord()), 'Salva o PO em .docx', 'exp doc'],
           null,
           ['Atualizar biblioteca', () => ATUALIZAR_BIB.executar(), 'Ler a pasta Pictogramas e atualizar os pictogramas'],
+          ...ENVIOS.menu(),   // envio compartilhado (07/11/2026)
+          null,
           ['Configurar Gemini', configurarRevisor, 'Chave do Gemini usada pelos botões ORTOGRAFIA / GRAMÁTICA e MELHORAR TEXTO'],
         ]).concat([null, ['Manual', abrirManual, 'Abre o manual com fotos (Manual do Gerador.html) em outra aba']]).map(it => it ? el('button', {class: it[3] || '', title: it[2], onclick: () => { fecharMenu(); it[1](); }}, it[0]) : el('div', {class: 'sep-menu'})))),
       // chave APR | PO no centro da barra; o título desce para a linha do status (21/10/2026)
@@ -4326,6 +4328,7 @@ window.addEventListener('afterprint', ajustarZoom);
 <script src="recursos/aprendidos.js"></script>
 <script src="recursos/importar_excel.js"></script>
 <script src="recursos/atualizar_biblioteca.js"></script>
+<script src="recursos/envios.js"></script>
 <script src="recursos/planilha_previa.js"></script>
 <script src="recursos/xls.js"></script>
 <script src="recursos/apr.js"></script>

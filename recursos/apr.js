@@ -1770,6 +1770,8 @@ const APR = (() => {
       ['Exportar Excel', () => exportar(), 'Salva a APR em .xlsx, no modelo da APR', 'exp xls'],
       null,
       ['Atualizar Tabela de Perigos', atualizarTabela, 'Escolha a planilha de Perigos e Riscos (Excel) para atualizar a lista do gerador'],
+      null,
+      ...ENVIOS.menu(),   // envio compartilhado (07/11/2026)
     ];
   }
 
@@ -2762,7 +2764,7 @@ input.cf2-ed{padding:0 10px}textarea.cf2-ed{padding:6px 10px;resize:none;overflo
 `));
 
   setTimeout(iniciar, 0);
-  return {_lerPlanilhas: lerPlanilhas, alinharEtapas, mudou, restaurar, editor, previa, cliquePrevia, menu, salvar, abrir, abrirArquivo, abrirDados, nova, pdf, exportar, gerarExcel, ehAPR, lerExcel, puxarDoPO, abrirConferencia, importarParaPO, histParaPO, compararDoPO, pendenciasPO,
+  return {montarTabela, _lerPlanilhas: lerPlanilhas, alinharEtapas, mudou, restaurar, editor, previa, cliquePrevia, menu, salvar, abrir, abrirArquivo, abrirDados, nova, pdf, exportar, gerarExcel, ehAPR, lerExcel, puxarDoPO, abrirConferencia, importarParaPO, histParaPO, compararDoPO, pendenciasPO,
     validar, validarPO, relatorio, situacao, frasesPO, sugestoes, popupPO, nomeAPR, mostrarArquivo, alterado: () => alterado,
     get doc() { return apr; }, set doc(d) { apr = normalizar(d); }, get conf() { return conf; }};
 })();
