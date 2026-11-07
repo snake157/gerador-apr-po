@@ -38,7 +38,8 @@ const APR = (() => {
     d.etapas = (d.etapas || []).map(e => {
       const mEt = (e.metodo || '').trim();
       const ne = Object.assign(novaEtapa(), e, {
-        linhas: (e.linhas || []).map(l => Object.assign(novaLinha(), l, {confirmadas: l.confirmadas || [], metodo: (l.metodo || '').trim() ? l.metodo : mEt})),
+        linhas: (e.linhas || []).map(l => Object.assign(novaLinha(), l, {confirmadas: l.confirmadas || [], metodo: (l.metodo || '').trim() ? l.metodo : mEt,
+          perigo: renomeado(l.perigo || '')})),   // perigos com o nome corrigido na planilha (07/11/2026)
       });
       delete ne.metodo;
       return ne;
@@ -79,10 +80,12 @@ const APR = (() => {
   // Lista fechada, exatamente como na planilha: cada linha é um perigo (com o número "1 - ", "2 - "... quando o
   // mesmo perigo tem categorias de risco diferentes) atrelado a um risco e ao potencial de dano (PD) sugerido.
   // Na APR o perigo é escolhido da lista; o risco vem junto e não muda; o PD vem preenchido e pode ser trocado.
+  // perigo da planilha com o nome corrigido em 07/11/2026 (ex.: "Oxigenio" > "Oxigênio"): o nome antigo vira o novo
+  const renomeado = p => { const m = window.PERIGOS_RENOMEADOS || {}; if (m[p]) return m[p]; const k = Object.keys(m).find(x => N(x) === N(p)); return k ? m[k] : p; };
   let TAB = [];
   function montarTabela() {
     TAB = (window.TABELA_PERIGOS || []).filter(r => String(r.perigo || '').trim())
-      .map(r => ({perigo: String(r.perigo).trim(), risco: String(r.risco || '').trim(), pd: numero(r.pd), obs: String(r.obs || '').trim()}));
+      .map(r => ({perigo: renomeado(String(r.perigo).trim()), risco: String(r.risco || '').trim(), pd: numero(r.pd), obs: String(r.obs || '').trim()}));
   }
   montarTabela();
   const daTabela = perigo => TAB.find(r => r.perigo === String(perigo || '').trim()) || TAB.find(r => N(r.perigo) === N(perigo));

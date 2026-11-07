@@ -656,6 +656,7 @@ function el(tag, props, ...filhos) {
 const uid = () => Math.random().toString(36).slice(2, 10);
 const pad2 = n => String(n).padStart(2, '0');
 function rotuloPadrao(nome) {
+  nome = nomeEpiAtual(nome);
   // pictograma com o nome de um perigo da planilha: aparece o nome da planilha, sem o "(2)" do arquivo e com "/" de volta
   // (o Windows não aceita "/" no nome do arquivo)
   const arq = nome.replace(/\s*\(\d+\)$/, '');
@@ -666,6 +667,9 @@ function rotuloPadrao(nome) {
 }
 // nome atual do pictograma de perigo (os renomeados em 26/10/2026 continuam valendo pelo nome antigo)
 const nomePerigoAtual = n => (window.PERIGOS_NOMES_ANTIGOS || {})[n] || n;
+// EPIs que tinham o nome do arquivo (luva_vaqueta, oculos_seguranca...) e perigos da planilha com nome corrigido (07/11/2026)
+const nomeEpiAtual = n => (window.EPIS_NOMES_ANTIGOS || {})[n] || n;
+const perigoRenomeado = n => (window.PERIGOS_RENOMEADOS || {})[n] || n;
 function fmtData(iso) {
   if (!iso) return '';
   const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(iso);
@@ -706,7 +710,7 @@ function novoDoc() {
       listasAuto: true, ferramentas: '', materiais: '', equipamentos: '', fundoEpi: 1,
       // logotipo do histórico de revisões (05/11/2026): vazio = sem logotipo; logoCor 'original' | 'branco'
       logo: '', logoOriginal: '', logoCor: 'original', logoProp: 1,
-      episBasicos: ['Capacete', 'oculos_seguranca', 'Protetor auricular de silicone',
+      episBasicos: ['Capacete', 'Óculos de Segurança', 'Protetor auricular de silicone',
         'Botina de segurança com bico de aço e palmilha anti-furo. Sola em PU'].map(nome => ({nome})),
     },
     opcoes: {legendaFotos: true},
@@ -731,6 +735,14 @@ function normalizar(d) {
     // versão anterior: imagens eram só o endereço; agora cada uma tem linha (1 = superior, 2 = inferior) e tamanho
     imagens: (a.imagens || []).map((x, k) => typeof x === 'string' ? {img: x, linha: k < 4 ? 1 : 2} : x),
   }));
+  // nomes corrigidos em 07/11/2026: EPIs com nome de arquivo e perigos com erro de digitação passam para o nome novo
+  const simples = t => String(t || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/_/g, ' ').replace(/\s+/g, ' ').trim().toLowerCase();
+  const epiNovo = x => { if (!x || !x.nome) return; const n = nomeEpiAtual(x.nome); if (n === x.nome) return;
+    if (x.rotulo && simples(x.rotulo) === simples(x.nome)) x.rotulo = n;   // rótulo que era só o nome do arquivo
+    x.nome = n; };
+  const perNovo = x => { if (!x) return; if (x.nome) x.nome = nomePerigoAtual(x.nome); if (x.rotulo) x.rotulo = perigoRenomeado(x.rotulo); };
+  (d.cab.episBasicos || []).forEach(epiNovo);
+  d.etapas.forEach(e => { (e.epis || []).forEach(epiNovo); (e.perigos || []).forEach(perNovo); });
   d.treinamento = Object.assign(base.treinamento, d.treinamento || {});
   d.historico = d.historico || [];
   d.versao = 1;
@@ -744,7 +756,7 @@ const episPO = e => e.epis.filter(p => p.onde !== 'apr');
 function listaEpis() { return doc.cab.fundoEpi == 2 && BIB.epis2.length ? BIB.epis2 : BIB.epis1; }
 // aceita o nome ou o item; se o pictograma não estiver na biblioteca, usa a imagem guardada no item (ex.: vinda de um Word importado)
 function imgPerigo(x) { const nome = typeof x === 'string' ? x : x && x.nome; const p = BIB.perigos.find(y => y.nome === nome) || BIB.perigos.find(y => y.nome === nomePerigoAtual(nome)); return p ? p.img : (x && x.img) || null; }
-function imgEpi(x) { const nome = typeof x === 'string' ? x : x && x.nome; const p = listaEpis().find(y => y.nome === nome); return p ? p.img : (x && x.img) || null; }
+function imgEpi(x) { const nome = typeof x === 'string' ? x : x && x.nome; const p = listaEpis().find(y => y.nome === nome) || listaEpis().find(y => y.nome === nomeEpiAtual(nome)); return p ? p.img : (x && x.img) || null; }
 
 function ultimoHistorico() {
   let idx = -1;

@@ -11,7 +11,7 @@ const APRENDIDOS = (() => {
   const pronto = (async () => {
     const salvos = await rascunho.ler(CHAVE);
     if (Array.isArray(salvos)) for (const x of salvos) if (!lista.some(y => y.h === x.h && y.tipo === x.tipo)) lista.push(x);
-    for (const x of lista) if (x.tipo === 'perigo') x.nome = nomePerigoAtual(x.nome);
+    for (const x of lista) x.nome = x.tipo === 'perigo' ? nomePerigoAtual(x.nome) : nomeEpiAtual(x.nome);   // nomes antigos (07/11/2026: EPIs também)
   })();
 
   // identificação exata da imagem (mesmo arquivo no Word)
@@ -28,7 +28,7 @@ const APRENDIDOS = (() => {
   // Pictogramas dos POs de treino (recursos\pictos_treino.js): nome da biblioteca (ou vazio = não existe nela)
   // e o nome escrito na imagem. Valem depois das trocas que você fizer (as suas sempre ganham).
   const treino = Array.isArray(window.PICTOS_TREINO) ? window.PICTOS_TREINO : [];
-  for (const x of treino) if (x.tipo === 'perigo' && x.nome) x.nome = nomePerigoAtual(x.nome);   // nomes antigos dos perigos
+  for (const x of treino) if (x.nome) x.nome = x.tipo === 'perigo' ? nomePerigoAtual(x.nome) : nomeEpiAtual(x.nome);   // nomes antigos dos perigos e EPIs
   const porHash = {};
   for (const x of treino) porHash[x.tipo + ':' + x.h] = x;
   const LIMIAR_INTEIRA = 0.95, LIMIAR_SIMBOLO = 0.92;
