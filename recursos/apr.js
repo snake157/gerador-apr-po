@@ -300,7 +300,7 @@ const APR = (() => {
     if (editandoPO) return;                // edição no pop-up do PO: só vale ao salvar
     if (!carregando && typeof registrarHist === 'function') registrarHist('apr', estrutura);
     if (estrutura) renderEditor();
-    clearTimeout(tPrevia); tPrevia = setTimeout(() => { if (abaAtual === 'apr' || conf) renderPrevia(); }, 180);
+    clearTimeout(tPrevia); tPrevia = setTimeout(() => { if (abaAtual === 'apr' || conf) renderPrevia(); }, 350);   // 07/11/2026: era 180
     clearTimeout(tRascunho); tRascunho = setTimeout(() => rascunho.salvar(JSON.stringify(apr), 'apr:rascunho'), 800);
     if (!carregando) { alterado = true; mostrarArquivo(); }
   }
@@ -1950,22 +1950,32 @@ const APR = (() => {
   let abasExtras = Promise.resolve(), vezAbas = 0;
   const imagensAbas = {};
   let logoAbas = '';
+  let abasGuardadas = null;
   async function desenharAbas() {
     const vez = ++vezAbas;
+    const colocar = pags => {
+      const cont = $('#paginas');
+      cont.querySelectorAll('.xl-pagina').forEach(p => p.remove());
+      cont.append(...pags);
+    };
+    // (07/11/2026) a APR não mudou desde o último desenho (ex.: só trocou de aba APR/PO): põe as mesmas páginas
+    // na hora, sem montar e reler o Excel de novo (era o que travava a troca de aba)
+    let chave = JSON.stringify(apr);
+    if (abasGuardadas && abasGuardadas.chave === chave) { colocar(abasGuardadas.pags); return; }
     await new Promise(ok => setTimeout(ok, 120));          // espera a digitação parar
     if (vez !== vezAbas || typeof PLANILHA === 'undefined') return;
     if (logoAbas !== apr.logo) {                           // logotipo trocado: as imagens guardadas das abas não valem mais
       for (const k in imagensAbas) { URL.revokeObjectURL(imagensAbas[k]); delete imagensAbas[k]; }
       logoAbas = apr.logo;
     }
+    chave = JSON.stringify(apr);
     let arqs;
     try { arqs = await montarArquivos(); } catch (e) { console.error(e); return; }
     const pags = [];
     for (const nome of ABAS_EXTRAS) { try { const p = await PLANILHA.pagina(arqs, nome, imagensAbas); if (p) pags.push(p); } catch (e) { console.error(nome, e); } }
+    abasGuardadas = {chave, pags};
     if (vez !== vezAbas || conf || abaAtual !== 'apr') return;
-    const cont = $('#paginas');
-    cont.querySelectorAll('.xl-pagina').forEach(p => p.remove());
-    cont.append(...pags);
+    colocar(pags);
   }
   function cliquePrevia(ev) {
     const c = ev.target.closest('[data-apr]');
@@ -1983,10 +1993,12 @@ const APR = (() => {
   async function pdf() {
     if (abaAtual !== 'apr') trocarAba('apr');
     const antes = conf; conf = null;                       // a impressão é sempre da APR
+    imgTelaOriginal = true;                               // imagens no tamanho original (07/11/2026)
     renderPrevia();
     await abasExtras;                                     // Ordem de Serviço, Controle de revisão e Matriz de Risco
+    await esperarImagens($('#paginas'));
     const titulo = document.title; document.title = nomeAPR();
-    setTimeout(() => { window.print(); document.title = titulo; conf = antes; renderPrevia(); }, 150);
+    setTimeout(() => { window.print(); document.title = titulo; conf = antes; imgTelaOriginal = false; renderPrevia(); }, 150);
   }
 
   // ---------------- Excel ----------------
@@ -2011,7 +2023,9 @@ const APR = (() => {
   let modeloLido = null;
   function lerModelo() {
     if (!modeloLido) modeloLido = (async () => {
-      if (!window.MODELO_APR) throw new Error('não encontrei o modelo da APR (recursos/modelo_apr.js)');
+      // (07/11/2026) o modelo (~1,6 MB) só é baixado quando a APR precisa dele, e não mais ao abrir o gerador
+      if (!window.MODELO_APR) { try { await carregarScript('recursos/modelo_apr.js'); } catch (e) { modeloLido = null; } }
+      if (!window.MODELO_APR) { modeloLido = null; throw new Error('não encontrei o modelo da APR (recursos/modelo_apr.js)'); }
       const bin = Uint8Array.from(atob(window.MODELO_APR), c => c.charCodeAt(0));
       const z = await IMPORTAR.ajuda.lerZip(bin.buffer);
       const m = {};

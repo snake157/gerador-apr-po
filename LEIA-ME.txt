@@ -329,6 +329,9 @@ SUMÁRIO
 - Se incluir ou renomear um pictograma, use Menu > "ATUALIZAR BIBLIOTECA" e escolha a pasta "Pictogramas" (o
   navegador pede permissão para gravar nela o biblioteca.js). A biblioteca usada é a Pictogramas\biblioteca.js; a
   de recursos\biblioteca.js fica só de reserva.
+  (07/11/2026, gerador mais leve: a reserva só é carregada se faltar a de Pictogramas; o modelo da APR em Excel e o
+  treino de pictogramas só são carregados quando usados; na tela os pictogramas aparecem numa cópia de 500 px, e o
+  PDF, o Word e o Excel continuam com o original.)
 - PICTOGRAMAS APRENDIDOS: cada troca de pictograma numa imagem não reconhecida é gravada na hora no arquivo
   Pictogramas\aprendidos.js (vale também em outros computadores que usam a mesma pasta). Na primeira vez o
   gerador pede para escolher a pasta "Pictogramas" (ou para permitir gravar nela) e depois lembra. "AGORA NÃO"

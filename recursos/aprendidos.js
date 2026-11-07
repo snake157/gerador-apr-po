@@ -27,16 +27,25 @@ const APRENDIDOS = (() => {
 
   // Pictogramas dos POs de treino (recursos\pictos_treino.js): nome da biblioteca (ou vazio = não existe nela)
   // e o nome escrito na imagem. Valem depois das trocas que você fizer (as suas sempre ganham).
-  const treino = Array.isArray(window.PICTOS_TREINO) ? window.PICTOS_TREINO : [];
-  for (const x of treino) if (x.nome) x.nome = x.tipo === 'perigo' ? nomePerigoAtual(x.nome) : nomeEpiAtual(x.nome);   // nomes antigos dos perigos e EPIs
+  // (07/11/2026) o arquivo do treino (~1 MB) só é baixado na primeira importação, e não mais ao abrir o gerador
+  let treino = [], treinoPronto = null;
   const porHash = {};
-  for (const x of treino) porHash[x.tipo + ':' + x.h] = x;
+  function carregarTreino() {
+    if (!treinoPronto) treinoPronto = (async () => {
+      if (!window.PICTOS_TREINO) { try { await carregarScript('recursos/pictos_treino.js'); } catch (e) { /* sem treino: só as trocas aprendidas */ } }
+      treino = Array.isArray(window.PICTOS_TREINO) ? window.PICTOS_TREINO : [];
+      for (const x of treino) if (x.nome) x.nome = x.tipo === 'perigo' ? nomePerigoAtual(x.nome) : nomeEpiAtual(x.nome);   // nomes antigos dos perigos e EPIs
+      for (const x of treino) porHash[x.tipo + ':' + x.h] = x;
+    })();
+    return treinoPronto;
+  }
   const LIMIAR_INTEIRA = 0.95, LIMIAR_SIMBOLO = 0.92;
   const resposta = (x, d, comRotulo) => ({nome: x.nome || '', rotulo: comRotulo ? x.rotulo || '' : '', d, treino: true});
 
   // nome aprendido para esta imagem, ou null. inteiraFn: devolve a assinatura da imagem inteira (sob demanda)
   async function buscar(tipo, src, variantes, inteiraFn) {
     await pronto;
+    await carregarTreino();
     if (!src) return null;
     const validos = nomesDe(tipo), h = hash(src);
     const exato = lista.find(x => x.tipo === tipo && x.h === h && validos.has(x.nome));

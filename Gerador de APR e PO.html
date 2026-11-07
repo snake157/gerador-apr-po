@@ -5,9 +5,10 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Gerador de APR e PO</title>
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3CclipPath id='r'%3E%3Crect width='64' height='64' rx='12'/%3E%3C/clipPath%3E%3Cg clip-path='url(%23r)'%3E%3Crect width='64' height='64' fill='%23002060'/%3E%3Cpath d='M0 0H64L0 64Z' fill='%235D6532'/%3E%3C/g%3E%3Crect x='14' y='11' width='36' height='46' rx='5' fill='%23fff'/%3E%3Crect x='23' y='6' width='18' height='11' rx='3' fill='%23fff' stroke='%23002060' stroke-width='3.5'/%3E%3Cpath d='M22 36l7.5 7.5L43 29' fill='none' stroke='%235D6532' stroke-width='6.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E">
-<script src="recursos/biblioteca.js"></script>
-<!-- a biblioteca gravada por Menu > Atualizar biblioteca fica na pasta Pictogramas e vale no lugar da de cima -->
+<!-- a biblioteca gravada por Menu > Atualizar biblioteca fica na pasta Pictogramas e vale no lugar da de recursos;
+     a de recursos só é carregada se a de Pictogramas não existir (07/11/2026: antes as duas eram baixadas sempre) -->
 <script src="Pictogramas/biblioteca.js"></script>
+<script>if (!window.BIBLIOTECA) document.write('<script src="recursos/biblioteca.js"><\/script>');</script>
 <!-- pictogramas que o gerador aprendeu com as suas trocas (gravado sozinho; se não existir, não faz falta) -->
 <script src="Pictogramas/aprendidos.js"></script>
 <!-- nomes antigos dos pictogramas de perigo (antes de levarem o nome da planilha), para os POs já salvos -->
@@ -630,6 +631,70 @@ const LINHAS_HISTORICO = 7;   // linhas de 2,6 cm por página do histórico (ite
 
 // ---------------- utilidades ----------------
 const $ = s => document.querySelector(s);
+// ---------------- imagens na tela (07/11/2026: gerador mais leve) ----------------
+// As fotos e pictogramas ficam no documento como texto (data:...). Na tela, cada imagem grande vira um endereço
+// curto (blob:) feito uma vez só: o navegador não precisa ler e decodificar a imagem de novo a cada redesenho.
+// Os pictogramas da biblioteca (1200 px) aparecem na tela numa cópia de 500 px; o documento continua com o
+// original, e o PDF (impressão) também usa o original. Word, Excel e Salvar não passam por aqui.
+const IMG_TELA = new Map();          // data:... -> {cheia: blob:, menor: blob: | null}
+const LIMITE_IMG_TELA = 400;         // as menos usadas saem (fotos trocadas, PO fechado)
+const LADO_PICTO_TELA = 500;
+let imgTelaOriginal = false;         // true durante a impressão: pictogramas no tamanho original
+let pictosBib = null, trocasPendentes = [];
+function ehPictoBib(src) {
+  if (!pictosBib) { pictosBib = new Set(); for (const l of [BIB.perigos, BIB.epis1, BIB.epis2]) for (const i of l || []) if (i && i.img) pictosBib.add(i.img); }
+  return pictosBib.has(src);
+}
+function dataParaBlob(src) {
+  const v = src.indexOf(','), tipo = src.slice(5, v).split(';')[0] || 'image/png';
+  const bin = atob(src.slice(v + 1)), b = new Uint8Array(bin.length);
+  for (let i = 0; i < bin.length; i++) b[i] = bin.charCodeAt(i);
+  return new Blob([b], {type: tipo});
+}
+function urlTela(src, picto = false) {
+  if (typeof src !== 'string' || src.length < 20000 || !src.startsWith('data:image/') || !src.includes(';base64,')) return src;
+  let r = IMG_TELA.get(src);
+  if (r) { IMG_TELA.delete(src); IMG_TELA.set(src, r); }       // usada agora: vai para o fim da fila
+  else {
+    try { r = {cheia: URL.createObjectURL(dataParaBlob(src)), menor: null}; } catch (e) { return src; }
+    IMG_TELA.set(src, r);
+    while (IMG_TELA.size > LIMITE_IMG_TELA) {
+      const [k, x] = IMG_TELA.entries().next().value;
+      IMG_TELA.delete(k); URL.revokeObjectURL(x.cheia); if (x.menor) URL.revokeObjectURL(x.menor);
+    }
+  }
+  if (!r.reduzindo && (picto || ehPictoBib(src))) { r.reduzindo = true; reduzirPicto(r); }
+  return (!imgTelaOriginal && r.menor) || r.cheia;
+}
+function reduzirPicto(r) {
+  const im = new Image();
+  im.onload = () => {
+    const w = im.naturalWidth, h = im.naturalHeight, e = LADO_PICTO_TELA / Math.max(w, h);
+    if (!(e < 0.9)) return;
+    const c = document.createElement('canvas'); c.width = Math.round(w * e); c.height = Math.round(h * e);
+    const g = c.getContext('2d'); g.imageSmoothingQuality = 'high'; g.drawImage(im, 0, 0, c.width, c.height);
+    c.toBlob(b => {
+      if (!b || !IMG_TELA.size) return;
+      r.menor = URL.createObjectURL(b);
+      // as que já estão na tela passam para a cópia menor (de uma vez, no próximo quadro)
+      if (!trocasPendentes.length) requestAnimationFrame(() => {
+        const mapa = new Map(trocasPendentes.map(x => [x.cheia, x.menor])); trocasPendentes = [];
+        if (imgTelaOriginal) return;
+        document.querySelectorAll('img[src^="blob:"]').forEach(i => { const m = mapa.get(i.getAttribute('src')); if (m) i.src = m; });
+        paginasPO = [];      // as páginas guardadas da prévia mudaram de imagem: o próximo desenho monta de novo
+      });
+      trocasPendentes.push(r);
+    }, 'image/png');
+  };
+  im.src = r.cheia;
+}
+// impressão: espera as imagens da prévia ficarem prontas (pictogramas originais)
+function esperarImagens(raiz) {
+  return Promise.race([
+    Promise.all([...raiz.querySelectorAll('img')].map(i => i.decode ? i.decode().catch(() => {}) : null)),
+    new Promise(ok => setTimeout(ok, 4000)),
+  ]);
+}
 function el(tag, props, ...filhos) {
   const e = document.createElement(tag);
   for (const [k, v] of Object.entries(props || {})) {
@@ -639,6 +704,7 @@ function el(tag, props, ...filhos) {
     else if (k === 'value') e.value = v;
     else if (k === 'checked') e.checked = !!v;
     else if (k.startsWith('on')) e.addEventListener(k.slice(2), v);
+    else if (k === 'src' && tag === 'img') e.setAttribute('src', urlTela(v));
     else e.setAttribute(k, v === true ? '' : v);
   }
   for (const f of filhos.flat(Infinity)) {
@@ -1012,7 +1078,7 @@ function mudou(estrutura) {
 function mudouPO(estrutura) {
   if (!carregando) registrarHist('po', estrutura);
   if (estrutura) renderEditor();
-  clearTimeout(tPrevia); tPrevia = setTimeout(renderPrevia, 180);
+  clearTimeout(tPrevia); tPrevia = setTimeout(renderPrevia, 350);   // 350 ms (07/11/2026, era 180): não redesenha entre uma tecla e outra
   clearTimeout(tRascunho); tRascunho = setTimeout(salvarRascunhoPO, 800);
   if (!carregando) { alterado = true; mostrarArquivo(); }
 }
@@ -3577,20 +3643,21 @@ var imprimindoPO = false;     // a impressão é sempre do PO, mesmo com a confe
 async function emitirPDF() {
   if (abaAtual === 'apr') trocarAba('po');
   await compactarAgora(false);
-  imprimindoPO = true;
+  imprimindoPO = true; imgTelaOriginal = true;     // PDF com os pictogramas originais
   renderPrevia();
+  await esperarImagens($('#paginas'));
   const titulo = document.title;
   document.title = nomeArquivo();
-  setTimeout(() => { window.print(); document.title = titulo; imprimindoPO = false; if (typeof APR !== 'undefined' && APR.conf) renderPrevia(); }, 100);
+  setTimeout(() => { window.print(); document.title = titulo; imprimindoPO = false; imgTelaOriginal = false; if (typeof APR !== 'undefined' && APR.conf) renderPrevia(); }, 100);
 }
 
 // ---------------- medição e divisão das etapas ----------------
 let med = null;
 function prepararMedidor() {
-  const desc = el('div', {class: 'desc'});
-  const per = el('div', {class: 'pilha', style: 'height:auto;justify-content:flex-start'});
-  const epi = el('div', {class: 'pilha', style: 'height:auto;justify-content:flex-start'});
-  const sub = el('div', {class: 'sub-val', style: 'grid-column:11/14;display:block'});
+  const desc = el('div', {class: 'desc', 'data-med': 'desc'});
+  const per = el('div', {class: 'pilha', 'data-med': 'per', style: 'height:auto;justify-content:flex-start'});
+  const epi = el('div', {class: 'pilha', 'data-med': 'epi', style: 'height:auto;justify-content:flex-start'});
+  const sub = el('div', {class: 'sub-val', 'data-med': 'sub', style: 'grid-column:11/14;display:block'});
   const g = el('div', {class: 'g17 bloco'},
     sub,
     el('div', {class: 'c-desc', style: 'grid-column:7/14'}, desc),
@@ -3610,13 +3677,22 @@ function itemDescricao(it) {
   return d;
 }
 function pictoNo(item, img) {
-  return el('div', {class: 'picto'}, img ? el('img', {src: img, alt: ''}) : el('div', {class: 'falta'}, 'pictograma não encontrado'), el('span', {}, item.rotulo || ''));
+  return el('div', {class: 'picto'}, img ? el('img', {src: urlTela(img, true), alt: ''}) : el('div', {class: 'falta'}, 'pictograma não encontrado'), el('span', {}, item.rotulo || ''));
 }
+// (07/11/2026) a altura de cada linha, sublinha e pictograma fica guardada: ao digitar, só o que mudou é medido
+// de novo (medir obriga o navegador a refazer o layout, e era isso que fazia a digitação engasgar)
+const ALTURAS = new Map();
 function altura(no, pai, extraMm) {
-  pai.append(no);
-  const h = no.getBoundingClientRect().height / MMPX + extraMm;
-  no.remove();
-  return h;
+  const k = (pai.dataset.med || pai.className) + '|' + no.outerHTML.replace(/ src="[^"]*"/g, '');
+  let h = ALTURAS.get(k);
+  if (h === undefined) {
+    pai.append(no);
+    h = no.getBoundingClientRect().height / MMPX;
+    no.remove();
+    if (ALTURAS.size > 5000) ALTURAS.clear();
+    ALTURAS.set(k, h);
+  }
+  return h + extraMm;
 }
 // meiaLivre: a página anterior ficou com meia página vazia; a etapa pode começar nela e continuar na seguinte
 function dividirEtapa(e, meiaLivre = false) {
@@ -3979,6 +4055,7 @@ function blocosDoc() {
   return blocos;
 }
 let ultimoResumo = {};
+let paginasPO = [];   // páginas da prévia do PO da última vez (texto de cada uma e o elemento já ajustado)
 function renderPrevia() {
   // a conferência APR × PO aberta aparece no lugar da prévia nas duas abas (menos na impressão do PO)
   if (typeof APR !== 'undefined' && (abaAtual === 'apr' || (APR.conf && !imprimindoPO))) { APR.previa(); return; }
@@ -3999,9 +4076,19 @@ function renderPrevia() {
   if (doc.treinamento.incluir) pags.push(paginaTreinamento());
   pags.push(...paginasHistorico());
 
+  // (07/11/2026) páginas que ficaram iguais às da última vez não são trocadas: o navegador não precisa
+  // montar, medir e pintar de novo as páginas que a alteração não tocou (digitar numa etapa redesenha só ela)
+  const guardadas = new Map();
+  for (const g of paginasPO) { if (!guardadas.has(g.sig)) guardadas.set(g.sig, []); guardadas.get(g.sig).push(g.no); }
+  const novas = [];
+  paginasPO = pags.map(p => {
+    const sig = p.outerHTML, igual = guardadas.get(sig);
+    const no = igual && igual.length ? igual.shift() : (novas.push(p), p);
+    return {sig, no};
+  });
   const cont = $('#paginas');
-  cont.replaceChildren(...pags);
-  ajustarTextos(cont);
+  cont.replaceChildren(...paginasPO.map(g => g.no));
+  novas.forEach(ajustarTextos);
   ajustarZoom();
   atualizarInfos();
   if (rolarFotosDe) { const id = rolarFotosDe; rolarFotosDe = null; mostrarFotosNaPrevia(id); }
@@ -4224,11 +4311,10 @@ window.addEventListener('afterprint', ajustarZoom);
 <script src="recursos/exportar_word.js"></script>
 <script src="recursos/emf.js"></script>
 <script src="recursos/importar_word.js"></script>
-<script src="recursos/pictos_treino.js"></script>
+<!-- pictos_treino.js (treino da importação) e modelo_apr.js (modelo do Excel da APR) são baixados só quando usados -->
 <script src="recursos/aprendidos.js"></script>
 <script src="recursos/importar_excel.js"></script>
 <script src="recursos/atualizar_biblioteca.js"></script>
-<script src="recursos/modelo_apr.js"></script>
 <script src="recursos/planilha_previa.js"></script>
 <script src="recursos/xls.js"></script>
 <script src="recursos/apr.js"></script>
