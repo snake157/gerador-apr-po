@@ -555,11 +555,24 @@ const IMPORTAR = (() => {
   }
   async function reconhecerComTexto(src, tipo, rotulo) {
     const r = await reconhecer(src, tipo);
-    if (r || !rotulo) return r;
+    if (!rotulo) return r;
+    const k = t => norm(t).replace(/[^A-Z0-9]+/g, ' ').trim(), kr = k(rotulo);
+    const igualRotulo = nome => k(rotuloPadrao(nome)) === kr || k(nome) === kr;
+    if (r && r.nome && igualRotulo(r.nome)) return r;
     const vs = await assinatura(src, true);
-    if (!vs || !vs.length) return null;
+    if (!vs || !vs.length) return r;
     const ord = (await assinaturasBiblioteca(tipo)).map(b => ({b, c: Math.max(...vs.map(v => correlacao(v, b.a)))})).sort((x, y) => y.c - x.c);
-    const ach = ord.slice(0, 3).find(o => o.c >= 0.4 && nomeBate(rotulo, o.b.nome));
+    if (!ord.length) return r;
+    // o nome escrito embaixo decide entre pictogramas parecidos ou iguais na biblioteca ("1 - Atropelamento" e
+    // "2 - Atropelamento", luvas, uniformes): primeiro o nome exatamente igual, depois o que tem mais palavras em comum
+    // (sem empate). Já reconhecido por outro nome: só troca se o do nome escrito for quase igual na imagem (07/11/2026)
+    const perto = ord.filter(o => o.c >= 0.4 && o.c >= ord[0].c - (r ? 0.03 : 0.15)).slice(0, 12);
+    const exato = perto.filter(o => igualRotulo(o.b.nome));
+    if (exato.length) return {nome: exato[0].b.nome, rotulo: r && r.rotulo, d: exato[0].c};
+    if (r) return r;
+    const nota = o => { const a = palavrasNome(rotulo), b = palavrasNome(rotuloPadrao(o.b.nome)); if (!a.size || !b.size) return 0; const c = [...a].filter(w => b.has(w)).length; return c / Math.max(a.size, b.size); };
+    const ns = perto.map(o => ({o, n: nota(o)})).filter(x => x.n >= 0.6).sort((x, y) => y.n - x.n || y.o.c - x.o.c);
+    const ach = ns.length && (ns.length === 1 || ns[0].n > ns[1].n + 1e-9 || ns[0].o.c > ns[1].o.c + EMPATE) ? ns[0].o : null;
     return ach ? {nome: ach.b.nome, d: ach.c} : null;
   }
   // nome do pictograma -> nome exato da linha da planilha de perigos (vazio se o pictograma não é de um perigo da planilha)
