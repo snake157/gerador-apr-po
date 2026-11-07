@@ -62,6 +62,7 @@ body.sem-editor #btColuna{left:10px}
 .barra .linha-status{grid-column:1/3;grid-row:2;align-self:center;font-size:11px;min-width:0;white-space:nowrap;overflow:hidden;display:flex;gap:5px}
 .barra .tit-doc{flex:none;font-size:11px}
 .barra .tit-doc::after{content:' ·';font-weight:400;opacity:.8}
+.barra .linha-status.com-arquivo .tit-doc{display:none}
 .barra .status{opacity:.8;min-width:0;white-space:nowrap;overflow:hidden;display:flex}   /* uma linha só; o texto inteiro aparece ao passar o mouse */
 .barra .status .st-ini{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:pre}
 .barra .status .st-fim{flex:none;white-space:pre}
@@ -104,7 +105,7 @@ textarea{resize:vertical}
 .fotos-ed .foto-ed{display:grid;grid-template-columns:130px 1fr;grid-template-rows:auto auto 1fr;column-gap:8px;row-gap:4px}
 .fotos-ed .foto-ed img{grid-column:1;grid-row:1/4;height:92px}
 .fotos-ed .foto-ed>:not(img){grid-column:2}
-.fotos-ed .num-foto{font-size:12px;font-weight:600;color:#374151}
+.fotos-ed .num-foto{font-size:12px;font-weight:600;color:#374151;text-transform:uppercase;letter-spacing:.02em}
 .fotos-ed .par-ed{margin:0 0 0 12px;font-size:12.5px;color:var(--ui-acento)}
 .fotos-ed .par-ed.bloqueado{color:#9ca3af}
 .foto-ed{border:1px solid var(--ui-borda);border-radius:5px;padding:4px;background:#fff}
@@ -243,6 +244,7 @@ textarea{resize:vertical}
 .janela{background:#fff;border-radius:10px;width:min(900px,94vw);height:min(80vh,760px);display:flex;flex-direction:column}
 .janela header{display:flex;gap:8px;align-items:center;padding:12px;border-bottom:1px solid var(--ui-borda)}
 .janela header b{white-space:nowrap}
+.janela header b.quebra{white-space:normal;overflow-wrap:anywhere;min-width:0}
 .grade-picto{flex:1;overflow:auto;display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:8px;padding:12px}
 .grade-picto button{border:1px solid var(--ui-borda);background:#fff;border-radius:6px;padding:6px;cursor:pointer;font-size:11.5px;color:var(--ui-texto)}
 .grade-picto button:hover{border-color:var(--ui-acento);background:#eff6ff}
@@ -310,7 +312,7 @@ textarea{resize:vertical}
 .editor-foto .aviso-formas[hidden]{display:none}
 .editor-foto .aviso-formas span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0}
 .editor-foto .aviso-formas .btn{flex:none}
-.fotos-ed .num-foto .tag-conferir{margin-left:6px}
+.fotos-ed .num-foto .tag-conferir{margin-left:6px;text-transform:none;letter-spacing:0}
 .editor-foto .painel-desenhar .tit{font-size:11.5px;font-weight:700;text-transform:uppercase;letter-spacing:.03em;text-align:center;margin:3px 0 -2px}
 .editor-foto .painel-desenhar .grade2{display:grid;grid-template-columns:1fr 1fr;gap:5px}
 .editor-foto .painel-desenhar .grade4{display:grid;grid-template-columns:repeat(4,1fr);gap:6px}
@@ -329,7 +331,7 @@ textarea{resize:vertical}
 .ajuste-fotos b{letter-spacing:.04em;text-align:center}
 .ajuste-fotos .op{display:flex;align-items:center;gap:6px;font-size:12px;text-transform:uppercase;letter-spacing:.03em}
 .ajuste-fotos .op span{flex:1}
-.ajuste-fotos .op input[type=number]{width:64px;text-align:center;font-variant-numeric:tabular-nums}
+.ajuste-fotos .op input[type=number],.ajuste-fotos .op input.num{width:64px;text-align:center;font-variant-numeric:tabular-nums}
 .ajuste-fotos .dica,.ajuste-fotos .resumo,.ajuste-fotos .legenda{text-align:center;text-transform:uppercase;letter-spacing:.03em;margin:0}
 .ajuste-fotos .resumo{font-weight:700;font-size:12.5px}
 .ajuste-fotos .legenda{display:flex;gap:16px;justify-content:center;font-size:11px;color:var(--ui-suave)}
@@ -528,7 +530,7 @@ body.col-anim #previa{overflow-x:hidden}   /* a prévia já tem o tamanho final:
 /* 15 e 18: janelas: botões de fechar / confirmar no rodapé, iguais e ocupando a linha; campos e botões com 32 px */
 .janela .janela-bts{display:grid;grid-auto-flow:column;grid-auto-columns:minmax(0,1fr);gap:8px;padding:10px 12px;border-top:1px solid var(--ui-borda)}
 #modal .janela .btn{box-sizing:border-box;min-height:32px;text-transform:uppercase;letter-spacing:.02em;text-align:center}
-#modal .janela header input[type=text],#modal .janela input[type=number]{box-sizing:border-box;height:32px}
+#modal .janela header input[type=text],#modal .janela input[type=number],#modal .janela input.num{box-sizing:border-box;height:32px}
 .janela.ajuste-fotos .janela-bts,.janela.editor-foto .janela-bts{padding:0;border:0}
 .janela.editor-foto .janela-bts{padding:10px 12px;border-top:1px solid var(--ui-borda)}
 /* 16: janela de pendências com a altura do conteúdo */
@@ -552,6 +554,9 @@ body.col-anim #previa{overflow-x:hidden}   /* a prévia já tem o tamanho final:
 .rev-item.desmarcado .rev-depois{opacity:.4}
 .rev-item input{width:18px;height:18px;margin:2px auto 0}
 .rev-antes,.rev-depois{font-size:12.5px;line-height:1.5;border-radius:4px;padding:4px 6px;background:#fafafa}
+.rev-iguais{margin-top:6px}
+.rev-iguais>summary{cursor:pointer;text-transform:uppercase;letter-spacing:.03em;font:700 12px Arial,Helvetica,sans-serif;color:var(--ui-suave);padding:8px 2px;text-align:center}
+.rev-iguais>.rev-item{margin-top:8px}
 .janela.revisor del,.rev-legenda del{color:#b91c1c;background:#fde2e2;text-decoration:line-through;border-radius:2px;padding:0 1px}
 .janela.revisor ins,.rev-legenda ins{color:#15803d;background:#dcfce7;text-decoration:none;font-weight:700;border-radius:2px;padding:0 1px}
 .rev-carregando{display:flex;align-items:center;gap:10px;justify-content:center;padding:40px 0;color:var(--ui-suave);font-size:13px}
@@ -574,6 +579,16 @@ body.col-anim #previa{overflow-x:hidden}   /* a prévia já tem o tamanho final:
 .rev-erro{text-align:center;font-size:13px;color:#b91c1c;padding:20px 0 6px;margin:0}
 .janela.revisor .linha-2{display:grid;grid-template-columns:minmax(0,320px);justify-content:center}
 .janela.revisor .linha-2 .btn{height:32px}
+/* texto maior que o campo (07/11/2026): "…" no fim quando o campo não está em edição; inteiro ao passar o mouse */
+#editor input:not([type]):not(:focus),#editor input[type=text]:not(:focus),#editor input[type=search]:not(:focus){text-overflow:ellipsis}
+/* celular (07/11/2026): o gerador é feito para computador; aviso por cima, que dá para fechar */
+#avisoCelular{display:none}
+@media (max-width:600px){
+  #avisoCelular:not(.fechado){display:flex;position:fixed;inset:0;z-index:200;background:rgba(0,32,96,.98);color:#fff;align-items:center;justify-content:center;padding:24px;text-align:center;font:15px/1.5 Arial,Helvetica,sans-serif}
+  #avisoCelular .caixa{max-width:340px;display:flex;flex-direction:column;gap:14px}
+  #avisoCelular b{font-size:17px;text-transform:uppercase;letter-spacing:.03em}
+  #avisoCelular button{font:700 13px Arial,Helvetica,sans-serif;text-transform:uppercase;letter-spacing:.03em;padding:10px;border-radius:6px;border:1px solid #fff;background:transparent;color:#fff;cursor:pointer}
+}
 </style>
 </head>
 <body>
@@ -585,8 +600,19 @@ body.col-anim #previa{overflow-x:hidden}   /* a prévia já tem o tamanho final:
 <div id="medidor"></div>
 <div id="modal" hidden></div>
 <div id="aviso"></div>
+<div id="avisoCelular" role="dialog" aria-label="Aviso"><div class="caixa"><b>Use em um computador</b><span>O Gerador de APR e PO foi feito para a tela do computador. No celular as páginas ficam cortadas.</span><button type="button" onclick="this.closest('#avisoCelular').classList.add('fechado')">Continuar mesmo assim</button></div></div>
 <input type="file" id="abrirArquivo" accept=".json,.docx,.xlsx,.xls,application/json,application/vnd.ms-excel,application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" hidden>
 
+<script>
+// dica com o texto inteiro nos campos cortados com "…" (07/11/2026)
+document.addEventListener('mouseover', ev => {
+  const c = ev.target;
+  if (!(c instanceof HTMLInputElement) || !c.closest('#editor') || !/^(text|search)$/.test(c.type)) return;
+  if (c.title && c.dataset.dicaAuto !== '1') return;
+  if (c.scrollWidth > c.clientWidth + 1 && c.value) { c.title = c.value; c.dataset.dicaAuto = '1'; }
+  else if (c.dataset.dicaAuto === '1') { c.removeAttribute('title'); delete c.dataset.dicaAuto; }
+});
+</script>
 <script>
 'use strict';
 const BIB = window.BIBLIOTECA || {perigos: [], epis1: [], epis2: [], icones: {}};
@@ -734,7 +760,7 @@ function listaSub(tipo) {
   const itens = [];
   doc.etapas.forEach(e => e.sublinhas.forEach(s => {
     if (s.tipo !== tipo) return;
-    (s.valor || '').split(';').map(v => v.trim()).filter(Boolean).forEach(v => {
+    (s.valor || '').split(/[;,]/).map(v => v.trim()).filter(Boolean).forEach(v => {
       if (!itens.some(x => x.toLowerCase() === v.toLowerCase())) itens.push(v);
     });
   }));
@@ -1162,12 +1188,12 @@ async function ajustarFotos(o) {
 }
 function abrirAjusteFotos() {
   const m = $('#modal'), o = opcoesAjuste();
-  const num = (v, max) => el('input', {type: 'number', min: 1, max, step: 0.1, value: v});
+  const num = (v, max) => el('input', {type: 'text', inputmode: 'decimal', class: 'num', value: String(v).replace('.', ',')});   // medidas com vírgula (07/11/2026)
   const chk = el('input', {type: 'checkbox', checked: o.manual});
   const iL = num(o.il, 8.1), iA = num(o.ia, 15.3), lL = num(o.ll, 3.98), lA = num(o.la, 15.3);
   const resumo = el('div', {class: 'resumo'}, 'As fotos estão como foram coladas');
   const btFechar = el('button', {class: 'btn', onclick: () => fechar()}, 'Cancelar');
-  const ler = (inp, max) => { const n = Math.min(max, Math.max(1, +String(inp.value).replace(',', '.') || max)); inp.value = n; return n; };
+  const ler = (inp, max) => { const n = Math.min(max, Math.max(1, +String(inp.value).replace(',', '.') || max)); inp.value = String(n).replace('.', ','); return n; };
   const fechar = () => { m.hidden = true; m.classList.remove('claro'); m.style.paddingRight = ''; m.replaceChildren(); marcasFoto.clear(); renderPrevia(); };
   const ajustar = async () => {
     const op = {manual: chk.checked, il: ler(iL, 8.1), ia: ler(iA, 15.3), ll: ler(lL, 3.98), la: ler(lA, 15.3)};
@@ -1182,7 +1208,7 @@ function abrirAjusteFotos() {
     el('label', {class: 'op'}, chk, el('span', {}, 'Refazer as ajustadas à mão')),
     el('div', {class: 'op'}, el('span', {}, 'Foto individual (cm)'), iL, '×', iA),
     el('div', {class: 'op'}, el('span', {}, 'Lado a lado (cm)'), lL, '×', lA),
-    el('div', {class: 'dica'}, 'Máximo: individual 8,1 × 15,3 · lado a lado 4,0 × 15,3 · corte pelo centro'),
+    el('div', {class: 'dica'}, 'Máximo: individual 8,1 × 15,3 · lado a lado 3,98 × 15,3 · corte pelo centro'),
     resumo,
     el('div', {class: 'legenda'}, el('span', {style: '--c:#15803d'}, 'Ajustada'), el('span', {style: '--c:#d97706'}, 'Mantida')),
     el('div', {class: 'linha-bt'}, btFechar, el('button', {class: 'btn primario', onclick: ajustar}, 'Ajustar'))));
@@ -1410,8 +1436,8 @@ function editarFoto(f, lim = FOTO_MAX) {
     el('button', {class: 'btn', title: 'Tira o aviso desta foto', onclick: () => { delete f.conferirFormas; avisoFormas.hidden = true; mudou(true); }}, 'Formas conferidas'));
   ['pointerdown', 'wheel'].forEach(t => avisoFormas.addEventListener(t, ev => ev.stopPropagation()));
   palco.append(avisoFormas);
-  const inpL = el('input', {type: 'number', min: 1, max: LMAX, step: 0.1});
-  const inpA = el('input', {type: 'number', min: 1, max: AMAX, step: 0.1});
+  const inpL = el('input', {type: 'text', inputmode: 'decimal', class: 'num'});
+  const inpA = el('input', {type: 'text', inputmode: 'decimal', class: 'num'});
   const info = el('div', {class: 'info'});
   let nat = {w: 1, h: 1}, im = null, ct = null, larg = LMAX, alt = AMAX;
   let tamRef = null, escAtual = 1;   // tamanho do palco quando a foto foi enquadrada e a escala usada desde então
@@ -1426,7 +1452,7 @@ function editarFoto(f, lim = FOTO_MAX) {
     pos(imgDentro, {x: im.x - ct.x, y: im.y - ct.y, w: im.w, h: im.h});
     const cantos = {nw: [im.x, im.y], ne: [im.x + im.w, im.y], sw: [im.x, im.y + im.h], se: [im.x + im.w, im.y + im.h]};
     bolas.forEach(b => { const [x, y] = cantos[b.dataset.b]; b.style.left = x + 'px'; b.style.top = y + 'px'; });
-    inpL.value = larg.toFixed(1); inpA.value = alt.toFixed(1);
+    inpL.value = larg.toFixed(1).replace('.', ','); inpA.value = alt.toFixed(1).replace('.', ',');
     info.textContent = (anexo && automatico ? 'TAMANHO AUTOMÁTICO: A IMAGEM SE AJUSTA AO ESPAÇO DA LINHA' : `NO PO: ${v1(larg)} × ${v1(alt)} CM`)
       + (temMelhoria(melh) ? ' · FOTO MELHORADA' : '')
       + (formas.length ? ` · ${formas.length} ${formas.length > 1 ? 'FORMAS DESENHADAS' : 'FORMA DESENHADA'}` : '');
@@ -1467,8 +1493,9 @@ function editarFoto(f, lim = FOTO_MAX) {
     desenhar();
   };
   const caberNaCaixa = (l, a) => { automatico = false; const t = caberEm(aspCorte(), l * 10, a * 10); larg = t.w / 10; alt = t.h / 10; desenhar(); };
-  inpL.addEventListener('change', () => anexo ? tamanhoProporcional(inpL.value, null) : definirTamanho(inpL.value, alt));
-  inpA.addEventListener('change', () => anexo ? tamanhoProporcional(null, inpA.value) : definirTamanho(larg, inpA.value));
+  const lerCm = inp => inp.value.replace(',', '.');
+  inpL.addEventListener('change', () => anexo ? tamanhoProporcional(lerCm(inpL), null) : definirTamanho(lerCm(inpL), alt));
+  inpA.addEventListener('change', () => anexo ? tamanhoProporcional(null, lerCm(inpA)) : definirTamanho(larg, lerCm(inpA)));
   // foto inteira dentro do corte, no meio; o que faltar fica branco
   const encaixar = () => {
     automatico = false;
@@ -1991,6 +2018,14 @@ function rodapeJanela() {
   if (!j.querySelector('.grade-picto, .pp-lista, .area-palco, .rich, textarea, input')) j.classList.add('janela-curta');
 }
 new MutationObserver(rodapeJanela).observe($('#modal'), {childList: true});
+// Esc fecha a janela aberta (07/11/2026), como o botão FECHAR / CANCELAR / DESCARTAR do rodapé dela
+document.addEventListener('keydown', ev => {
+  if (ev.key !== 'Escape' || ev.defaultPrevented || document.getElementById('janelaPergunta')) return;
+  const m = $('#modal'); if (!m || m.hidden || m.querySelector('.editor-foto')) return;   // no editor de foto o Esc não descarta o ajuste
+  const bts = [...m.querySelectorAll('.janela-bts button, .janela > header button')].filter(b => b.offsetParent);
+  const b = bts.reverse().find(x => /^(fechar|cancelar|descartar|entendi|ok)$/i.test(x.textContent.trim()));
+  if (b) { ev.preventDefault(); b.click(); }
+});
 const botaoColar = (colar, rotulo = 'Colar') => el('button', {class: 'btn', title: 'Colar a foto copiada (de um Word, Excel, PowerPoint, print da tela...). Também dá para clicar na área e usar Ctrl+V.',
   onclick: async () => { const l = await lerAreaDeTransferencia(); if (l.length) colar(l); }}, rotulo);
 // miniatura: clicar escolhe um arquivo; com o mouse em cima, Ctrl+V troca pela imagem copiada
@@ -2632,7 +2667,7 @@ async function revisarDescricao(e, modo) {
   const bDescartar = el('button', {class: 'btn', onclick: fechar}, 'Descartar');
   const bPensar = !chave ? null : el('button', {class: 'btn', disabled: true, title: 'Manda o texto de novo para o Gemini com o modo pensar: mais lento, revisão mais caprichada'}, 'Refazer pensando');
   m.replaceChildren(el('div', {class: 'janela revisor', onclick: ev => ev.stopPropagation()},
-    el('header', {}, el('b', {}, titulo + (e.nome ? ' · ' + e.nome : '')), sub),
+    el('header', {}, el('b', {class: 'quebra'}, titulo + (e.nome ? ' · ' + e.nome : '')), sub),
     corpo,
     el('div', {class: 'janela-bts'}, bDescartar, bPensar, bAceitar)));
   m.onclick = fechar;
@@ -2670,8 +2705,9 @@ async function revisarDescricao(e, modo) {
       el('div', {class: 'rev-quem'}, 'Revisado por: ', el('b', {}, quem)),
       el('div', {class: 'rev-legenda'}, el('span', {}, el('del', {}, 'riscado'), ' sai'), el('span', {}, el('ins', {}, 'verde'), ' entra'),
         el('span', {}, nMud ? `${nMud} de ${itens.length} linha${itens.length > 1 ? 's' : ''} com alteração` : 'Nenhuma alteração sugerida')),
-      el('div', {class: 'rev-cab'}, el('span', {}, 'Usar'), el('span', {}, 'Antes'), el('span', {}, 'Depois')),
-      ...itens.map((t, k) => {
+      el('div', {class: 'rev-cab'}, el('span', {}, 'Usar'), el('span', {}, 'Antes'), el('span', {}, 'Depois')));
+    // linhas com alteração (ou aviso) primeiro; as sem alteração ficam recolhidas embaixo (07/11/2026)
+    const linhasRev = itens.map((t, k) => {
         const cx = el('input', {type: 'checkbox', checked: !t.igual && !t.bloquear.length, disabled: t.igual, title: 'Usar esta linha revisada'});
         caixas[k] = cx;
         const linha = el('div', {class: 'rev-item' + (t.igual ? ' igual' : '') + (!t.igual && t.bloquear.length ? ' desmarcado' : '') + (t.conferir.length || t.bloquear.length ? ' com-aviso' : '')},
@@ -2683,7 +2719,12 @@ async function revisarDescricao(e, modo) {
           t.conferir.map(c => c.palavra + (c.sugestao ? ' (sugestão: ' + c.sugestao + ')' : '')).join(', ')));
         cx.addEventListener('change', () => linha.classList.toggle('desmarcado', !cx.checked));
         return linha;
-      }));
+      });
+    const soIgual = k => itens[k].igual && !itens[k].conferir.length;
+    corpo.append(...linhasRev.filter((x, k) => !soIgual(k)));
+    const iguais = linhasRev.filter((x, k) => soIgual(k));
+    if (iguais.length) corpo.append(el('details', {class: 'rev-iguais'},
+      el('summary', {}, `${iguais.length} linha${iguais.length > 1 ? 's' : ''} sem alteração`), ...iguais));
     bAceitar.disabled = !nMud;
     if (bPensar) bPensar.disabled = false;
     if (nMud) bAceitar.focus();
@@ -3317,6 +3358,7 @@ function conferirPO(exportar) {
 // Word aberto/salvo: o "Salvar" grava nele; documento novo pede o local. O .po.json antigo ainda abre, só para passar para Word.
 let arquivo = null;        // FileSystemFileHandle (Edge/Chrome)
 let nomeAtual = '';        // nome do arquivo atual, para mostrar
+let nomeOrigem = '';       // Word/Excel feito fora do gerador que foi aberto como PO novo (só para mostrar na barra)
 let alterado = false, carregando = false, salvoAs = '';
 const poAlterado = () => alterado;   // usado pela conferência (aba APR) ao fechar
 const TIPO_DOCX = 'application/vnd.openxmlformats-officedocument.wordprocessingml.document';
@@ -3331,17 +3373,18 @@ function mostrarArquivo() {
   if (!window.DOC_INICIAL) rascunho.salvar(alterado, 'alterado');
   if (!s) return;
   const estado = alterado ? ' – não salvo' : salvoAs ? ` – salvo ${salvoAs}` : '';
-  linhaStatus(s, nomeAtual || 'PO novo, sem arquivo', estado, !!nomeAtual);
+  linhaStatus(s, nomeAtual || (nomeOrigem ? 'Aberto de ' + nomeOrigem : 'PO novo, sem arquivo'), estado, !!(nomeAtual || nomeOrigem));
 }
 // linha "<arquivo> – salvo 16:26" numa linha só (APR e PO), curta para caber ao lado de ↶ ↷: se não couber, o "…"
 // fica no meio do nome; o fim do nome (_Rev02.po.json) e o "salvo ..." aparecem sempre; o texto inteiro fica na dica do mouse
 function linhaStatus(s, texto, fim, ehArquivo) {
   const corte = ehArquivo ? Math.max(1, texto.length - 14) : texto.length;
   s.title = texto + fim;
+  if (s.parentElement) s.parentElement.classList.toggle('com-arquivo', !!ehArquivo);   // com arquivo, o nome usa a linha toda (07/11/2026)
   s.replaceChildren(el('span', {class: 'st-ini'}, texto.slice(0, corte)), el('span', {class: 'st-fim'}, texto.slice(corte) + fim));
 }
 function definirArquivo(handle, nome) {
-  arquivo = handle; nomeAtual = nome || '';
+  arquivo = handle; nomeAtual = nome || ''; nomeOrigem = '';
   rascunho.salvar(handle || null, 'arquivo');
   rascunho.salvar(nomeAtual, 'nomeArquivo');
 }
@@ -3446,7 +3489,7 @@ async function abrirArquivoEscolhido(f, handle) {
       mostrarAvisosImportacao(f.name, r.avisos, r.doc.etapas.length);
       return;
     }
-    definirArquivo(null, ''); carregarDoc(r.doc); alterado = true; mostrarArquivo();
+    definirArquivo(null, ''); nomeOrigem = f.name; carregarDoc(r.doc); alterado = true; mostrarArquivo();
     if (r.completo) aviso('Aberto: ' + f.name + ' (dados completos do gerador). Use "Salvar" para gravar em Word.');
     else mostrarAvisosImportacao(f.name, r.avisos, r.doc.etapas.length);
     return;
@@ -3455,7 +3498,7 @@ async function abrirArquivoEscolhido(f, handle) {
   let bruto = null; try { bruto = JSON.parse(txt); } catch (e) {}
   if (bruto && bruto.tipo === 'apr' && typeof APR !== 'undefined') { APR.abrirDados(bruto, null, f.name); return; }
   const d = lerPO(txt);
-  definirArquivo(null, ''); carregarDoc(d); alterado = true; mostrarArquivo();
+  definirArquivo(null, ''); nomeOrigem = f.name; carregarDoc(d); alterado = true; mostrarArquivo();
   aviso('Aberto: ' + f.name + ' (formato antigo). Use "Salvar" para gravar o PO em Word.');
 }
 $('#abrirArquivo').addEventListener('change', async ev => {

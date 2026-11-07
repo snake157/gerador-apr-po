@@ -181,7 +181,7 @@ const PLANILHA = (() => {
       const f = xf.font;
       const hz = xf.h === 'general' ? (numero ? 'right' : 'left') : xf.h === 'centerContinuous' ? 'center' : xf.h === 'justify' || xf.h === 'distributed' ? 'justify' : xf.h;
       const vt = {top: 'flex-start', center: 'center', bottom: 'flex-end', justify: 'center', distributed: 'center'}[xf.v] || 'flex-end';
-      const caixa = el('div', {class: 'xl-cel' + (xf.wrap || xf.h === 'justify' ? ' quebra' : ''), style: `left:${x}pt;top:${y}pt;width:${w}pt;height:${h}pt;align-items:${vt};` +
+      const caixa = el('div', {class: 'xl-cel' + (xf.wrap || xf.h === 'justify' ? ' quebra' : ''), style: `left:${x}pt;top:${y}pt;width:${w}pt;height:${h}pt;align-items:${vt};${vt === 'flex-start' && xf.wrap ? 'padding-top:1.5pt;' : ''}` +
         `justify-content:${hz === 'right' ? 'flex-end' : hz === 'center' ? 'center' : 'flex-start'};text-align:${hz};font-family:'${f.nome || 'Arial'}',Arial,sans-serif;font-size:${f.sz || 11}pt;` +
         `font-weight:${f.b ? 700 : 400};font-style:${f.i ? 'italic' : 'normal'};text-decoration:${f.u ? 'underline' : 'none'};color:${f.cor || '#000'}`});
       const txt = el('div', {class: 'xl-txt' + (xf.rot === 90 ? ' rot90' : xf.rot === 180 ? ' rot270' : '')});

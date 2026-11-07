@@ -1194,7 +1194,7 @@ function mostrarAvisosImportacao(nome, avisos, n) {
       el('ul', {style: 'margin:4px 0 0;padding-left:18px;font-size:12.5px;color:var(--ui-suave)'}, pictos.map(a => el('li', {}, a.replace(/; ficou.*$|; ficaram.*$/, '')))))) : null;
   const titulo = t => el('p', {style: 'margin:0 0 4px;font-weight:600'}, t);
   m.replaceChildren(el('div', {class: 'janela', style: 'height:auto;max-height:80vh;width:min(720px,94vw)', onclick: e => e.stopPropagation()},
-    el('header', {}, el('b', {}, (/\.xlsx$/i.test(nome) ? 'Excel' : 'Word') + ' aberto: ', el('span', {style: 'text-transform:none'}, nome)), el('span', {style: 'flex:1'}), el('button', {class: 'btn primario', onclick: fechar}, 'Entendi')),
+    el('header', {}, el('b', {class: 'quebra'}, (/\.xlsx$/i.test(nome) ? 'Excel' : 'Word') + ' aberto: ', el('span', {style: 'text-transform:none'}, nome)), el('span', {style: 'flex:1'}), el('button', {class: 'btn primario', onclick: fechar}, 'Entendi')),
     el('div', {style: 'padding:12px 16px;overflow:auto'},
       el('p', {style: 'margin:0 0 10px'}, `${n} etapa(s) lida(s).` + (avisos.length ? ' Confira os pontos abaixo antes de salvar:' : '')),
       atencao.length ? [titulo('Precisa de atenção'), lista(atencao.map(a => el('li', {}, a)))] : null,

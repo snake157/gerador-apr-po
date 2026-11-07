@@ -48,7 +48,7 @@ const APR = (() => {
     return d;
   }
   let apr = novaAPR();
-  let arquivo = null, nomeAtual = '', alterado = false, carregando = false, salvoAs = '';
+  let arquivo = null, nomeAtual = '', nomeOrigem = '', alterado = false, carregando = false, salvoAs = '';
 
   const numero = v => { const n = parseInt(v, 10); return n >= 1 && n <= 5 ? n : null; };
   const riscoDe = l => { const po = numero(l.po), pd = numero(l.pd); return po && pd ? po * pd : null; };
@@ -259,10 +259,11 @@ const APR = (() => {
     const s = $('#statusArquivo');
     if (!s || abaAtual !== 'apr') return;
     const estado = alterado ? ' – não salvo' : salvoAs ? ` – salvo ${salvoAs}` : '';
-    linhaStatus(s, nomeAtual || 'APR nova, sem arquivo', estado, !!nomeAtual);   // no HTML: "…" no meio
+    // Excel feito fora do gerador abre como APR nova: a barra mostra de onde veio (07/11/2026)
+    linhaStatus(s, nomeAtual || (nomeOrigem ? 'Aberta de ' + nomeOrigem : 'APR nova, sem arquivo'), estado, !!(nomeAtual || nomeOrigem));   // no HTML: "…" no meio
   }
   function definirArquivo(h, nome) {
-    arquivo = h; nomeAtual = nome || '';
+    arquivo = h; nomeAtual = nome || ''; nomeOrigem = '';
     rascunho.salvar(h || null, 'apr:arquivo'); rascunho.salvar(nomeAtual, 'apr:nome');
   }
   function carregar(d) {
@@ -345,7 +346,7 @@ const APR = (() => {
       let d;
       try { d = await lerExcel(f); }
       catch (e) { console.error(e); alert('Não consegui ler essa APR: ' + erroAmigavel(e)); return; }
-      if (g) { d = juntarGuardado(d, g.dados); definirArquivo(h || null, f.name); } else definirArquivo(null, '');
+      if (g) { d = juntarGuardado(d, g.dados); definirArquivo(h || null, f.name); } else { definirArquivo(null, ''); nomeOrigem = f.name; }
       carregar(d); alterado = true; mostrarArquivo();
       const qt = `${d.etapas.length} etapas, ${d.etapas.reduce((s, e) => s + e.linhas.length, 0)} perigos`;
       aviso(g ? `APR lida da planilha: ${qt}. Confira e use "Salvar".` : `APR lida: ${qt}. Use "Salvar" para gravar a APR em Excel.`);
@@ -362,7 +363,7 @@ const APR = (() => {
       return;
     }
     if (abaAtual !== 'apr') trocarAba('apr');
-    definirArquivo(null, ''); carregar(d); alterado = true; mostrarArquivo();
+    definirArquivo(null, ''); nomeOrigem = nome || ''; carregar(d); alterado = true; mostrarArquivo();
     aviso('Aberto: ' + nome + ' (formato antigo). Use "Salvar" para gravar a APR em Excel.');
   }
   async function iniciar() {
@@ -728,6 +729,8 @@ const APR = (() => {
         if (!numero(l.pd)) falta.push('PD');
         if (!l.medidas.trim()) falta.push('medidas de controle');
         if (falta.length) add(ae, i, `${l.perigo ? `"${l.perigo}"` : 'Perigo sem nome'}: falta ${falta.join(', ')}.`, l.id + ':' + (l.perigo.trim() ? 'risco' : 'perigo'));
+        // perigo fora da lista de Perigos e Riscos (07/11/2026)
+        if (l.perigo.trim() && !daTabela(l.perigo)) add(ae, i, `"${l.perigo}": perigo fora da lista. Escolha o perigo da lista.`, l.id + ':perigo');
       }
     });
     return L;
@@ -1451,7 +1454,7 @@ const APR = (() => {
       aviso('Descrição do PO atualizada (salve o PO na aba PO).');
     };
     md.replaceChildren(el('div', {class: 'janela apr-pop cf2-pop', onclick: ev => ev.stopPropagation()},
-      el('header', {}, el('b', {}, `Editar descrição do PO – Etapa ${ip + 1}: ${pe.nome || ''}`), el('span', {style: 'flex:1'}),
+      el('header', {}, el('b', {class: 'quebra'}, `Editar descrição do PO – Etapa ${ip + 1}: ${pe.nome || ''}`), el('span', {style: 'flex:1'}),
         el('button', {class: 'btn', onclick: fechar}, 'Cancelar'),
         el('button', {class: 'btn primario', title: 'Aplica o texto no PO (o arquivo é salvo pelo SALVAR)', onclick: salvar}, 'Aplicar')),
       el('div', {class: 'apr-pop-corpo'},
@@ -1506,7 +1509,7 @@ const APR = (() => {
     };
     const antes = String(pe.descricao || '').split('\n').map(x => N(textoPuro(x)));
     md.replaceChildren(el('div', {class: 'janela apr-pop', onclick: ev => ev.stopPropagation()},
-      el('header', {}, el('b', {}, `${linha >= 0 ? 'Editar' : 'Incluir'} no PO – Etapa ${i + 1}: ${pe.nome || ''}`), el('span', {style: 'flex:1'}),
+      el('header', {}, el('b', {class: 'quebra'}, `${linha >= 0 ? 'Editar' : 'Incluir'} no PO – Etapa ${i + 1}: ${pe.nome || ''}`), el('span', {style: 'flex:1'}),
         el('button', {class: 'btn', onclick: fechar}, 'Cancelar'),
         el('button', {class: 'btn primario', onclick: () => {
           pe.descricao = tmp.descricao;
