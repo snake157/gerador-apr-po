@@ -356,7 +356,7 @@ async function gerarExcel() {
         const lim = g.length === 2 ? FOTO_LADO : FOTO_MAX;
         const im = await imagemXL(f.img);
         const fa = f.aspecto ? f : Object.assign({}, f, {aspecto: im ? im.w / im.h : 4 / 3});   // usa a proporção real da foto
-        const t = tamanhoFoto(fa, maxH, lim) || caberEm(fa.aspecto, lim.larg, Math.min(lim.alt, maxH));
+        const t = tamanhoFoto(fa, maxH, lim) || caberEm(fa.aspecto, lim.larg, Math.min(lim.auto || lim.alt, maxH));
         const legenda = leg ? `FOTO ${pad2(f.num)}` + (f.legenda ? ` – ${f.legenda}` : '') : '';
         // na impressão o Excel desenha a imagem um pouco maior que as linhas: reduz 3% e deixa folga para a legenda
         const w = t.w * ESC * 0.97, h = t.h * ESC * 0.97, lw = Math.max(w, 35 * ESC);

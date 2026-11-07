@@ -1055,12 +1055,14 @@ function girarImagem(src) {
     img.src = src;
   });
 }
-const FOTO_MAX = {larg: 81, alt: 70};   // mm: limite das fotos no PO (8,1 × 7 cm = largura de duas lado a lado + 1,4 mm; sobra 1,4 mm de cada lado na coluna de 84 mm) (07/11/2026)
-const FOTO_LADO = {larg: 39.8, alt: 70};  // mm: fotos lado a lado (4,0 × 7 cm cada; 3,98 cm exatos) (07/11/2026)
+// alt: altura máxima = o que cabe numa coluna de página inteira com legenda de 1 linha (15,3 cm); se não couber, a foto encolhe sozinha.
+// auto: tamanho de quem não foi ajustado e do 'maior possível' do editor (7,4 cm = o que cabe na meia página) (07/11/2026)
+const FOTO_MAX = {larg: 81, alt: 153, auto: 74};   // mm: limite das fotos no PO (8,1 cm = largura de duas lado a lado + 1,4 mm; sobra 1,4 mm de cada lado na coluna de 84 mm) (07/11/2026)
+const FOTO_LADO = {larg: 39.8, alt: 153, auto: 74};  // mm: fotos lado a lado (4,0 cm cada; 3,98 cm exatos) (07/11/2026)
 const ANEXO_MAX = {larg: 279, alt: 155}; // mm: área útil da célula do anexo
 const FOTO_HIST = {larg: 44, alt: 25};   // mm: foto da alteração no histórico (4,4 × 2,5 cm)
 // lado a lado: e.juntar[j] marca a foto j junto com a seguinte (j+1). Cada foto entra em um par só;
-// as que ficam sozinhas seguem o limite normal de 8,1 × 7 cm.
+// as que ficam sozinhas seguem o limite normal de 8,1 cm de largura.
 function inicioDePar(e) {          // inicioDePar(e)[j] = true quando a foto j abre um par lado a lado
   const r = [];
   const marc = e.juntar || [];
@@ -1090,7 +1092,7 @@ function caberEm(aspecto, larg = FOTO_MAX.larg, alt = FOTO_MAX.alt) {
 function tamanhoFoto(f, maxH, lim) {
   let t;
   if (f.largura && f.altura) t = {w: f.largura * 10, h: f.altura * 10};
-  else if (f.aspecto) t = caberEm(f.aspecto, lim.larg, lim.alt);
+  else if (f.aspecto) t = caberEm(f.aspecto, lim.larg, lim.auto || lim.alt);
   else return null;
   if (t.w > lim.larg) t = {w: lim.larg, h: t.h * lim.larg / t.w};
   if (t.h > maxH) t = {w: t.w * maxH / t.h, h: maxH};
@@ -1102,13 +1104,14 @@ function estiloFoto(f, maxH, lim = FOTO_MAX) {
   return `width:${t.w.toFixed(2)}mm;height:${t.h.toFixed(2)}mm;object-fit:fill`;
 }
 // ---------------- ajuste automático das fotos das etapas ----------------
-// Foto individual e foto lado a lado vão para o tamanho escolhido na janela (padrão 8,1 × 7 e 4,0 × 7), com corte pelo centro.
+// Foto individual e foto lado a lado vão para o tamanho escolhido na janela (padrão 8,1 × 7,4 e 4,0 × 7,4), com corte pelo centro.
 // Fotos ajustadas à mão (com recorte ou tamanho e sem f.auto) ficam como estão, a não ser que a opção peça para refazer.
-const AJUSTE_PADRAO = {manual: false, il: 8.1, ia: 7, ll: 3.98, la: 7};
+const AJUSTE_PADRAO = {manual: false, il: 8.1, ia: 7.4, ll: 3.98, la: 7.4};
 function opcoesAjuste() {
   try {
     const o = Object.assign({}, AJUSTE_PADRAO, JSON.parse(localStorage.getItem('ajusteFotos') || '{}'));
     if (o.il === 7.6 || o.il === 7.9) o.il = 8.1;   // os antigos padrões (7,6 e 7,9 cm) passam para o novo máximo (07/11/2026)
+    if (o.ia === 7) o.ia = 7.4; if (o.la === 7) o.la = 7.4;   // altura: 7 passa para 7,4 (07/11/2026)
     if (o.ll === 3.8) o.ll = 3.98;                   // lado a lado: 3,8 passa para 4,0 (3,98)
     return o;
   } catch (e) { return Object.assign({}, AJUSTE_PADRAO); }
@@ -1156,13 +1159,13 @@ function abrirAjusteFotos() {
   const m = $('#modal'), o = opcoesAjuste();
   const num = (v, max) => el('input', {type: 'number', min: 1, max, step: 0.1, value: v});
   const chk = el('input', {type: 'checkbox', checked: o.manual});
-  const iL = num(o.il, 8.1), iA = num(o.ia, 7), lL = num(o.ll, 3.98), lA = num(o.la, 7);
+  const iL = num(o.il, 8.1), iA = num(o.ia, 15.3), lL = num(o.ll, 3.98), lA = num(o.la, 15.3);
   const resumo = el('div', {class: 'resumo'}, 'As fotos estão como foram coladas');
   const btFechar = el('button', {class: 'btn', onclick: () => fechar()}, 'Cancelar');
   const ler = (inp, max) => { const n = Math.min(max, Math.max(1, +String(inp.value).replace(',', '.') || max)); inp.value = n; return n; };
   const fechar = () => { m.hidden = true; m.classList.remove('claro'); m.style.paddingRight = ''; m.replaceChildren(); marcasFoto.clear(); renderPrevia(); };
   const ajustar = async () => {
-    const op = {manual: chk.checked, il: ler(iL, 8.1), ia: ler(iA, 7), ll: ler(lL, 3.98), la: ler(lA, 7)};
+    const op = {manual: chk.checked, il: ler(iL, 8.1), ia: ler(iA, 15.3), ll: ler(lL, 3.98), la: ler(lA, 15.3)};
     try { localStorage.setItem('ajusteFotos', JSON.stringify(op)); } catch (e) {}
     resumo.textContent = 'Ajustando...';
     const r = await ajustarFotos(op);
@@ -1174,7 +1177,7 @@ function abrirAjusteFotos() {
     el('label', {class: 'op'}, chk, el('span', {}, 'Refazer as ajustadas à mão')),
     el('div', {class: 'op'}, el('span', {}, 'Foto individual (cm)'), iL, '×', iA),
     el('div', {class: 'op'}, el('span', {}, 'Lado a lado (cm)'), lL, '×', lA),
-    el('div', {class: 'dica'}, 'Máximo: individual 8,1 × 7 · lado a lado 4,0 × 7 · corte pelo centro'),
+    el('div', {class: 'dica'}, 'Máximo: individual 8,1 × 15,3 · lado a lado 4,0 × 15,3 · corte pelo centro'),
     resumo,
     el('div', {class: 'legenda'}, el('span', {style: '--c:#15803d'}, 'Ajustada'), el('span', {style: '--c:#d97706'}, 'Mantida')),
     el('div', {class: 'linha-bt'}, btFechar, el('button', {class: 'btn primario', onclick: ajustar}, 'Ajustar'))));
@@ -1437,7 +1440,7 @@ function editarFoto(f, lim = FOTO_MAX) {
   // se o corte sair do palco, reenquadra a tela (só a visualização muda)
   const enquadrar = () => { const A = area(); if (ct.x < 0 || ct.y < 0 || ct.x + ct.w > A.w || ct.y + ct.h > A.h) porCorte(corteAtual()); else desenhar(); };
   const fotoInteira = () => {
-    const t = caberEm(asp(), lim.larg, lim.alt); larg = t.w / 10; alt = t.h / 10;
+    const t = caberEm(asp(), lim.larg, lim.auto || lim.alt); larg = t.w / 10; alt = t.h / 10;
     porCorte({x: 0, y: 0, w: 1, h: 1});
   };
   // tamanho escolhido: o corte ganha esse formato, o maior possível dentro da foto, no meio dela
@@ -1499,7 +1502,7 @@ function editarFoto(f, lim = FOTO_MAX) {
       if (c === 'n') { y = Math.min(py, o.y + o.h - MIN); h = o.y + o.h - y; }
       ct = {x, y, w, h};
       // o tamanho no PO acompanha o novo formato do recorte, o maior possível dentro do limite
-      const t = caberEm(w / h, lim.larg, lim.alt); larg = t.w / 10; alt = t.h / 10;
+      const t = caberEm(w / h, lim.larg, lim.auto || lim.alt); larg = t.w / 10; alt = t.h / 10;
     } else if (acao.c) {                   // cantos: mantém a proporção
       const c = acao.c, k = o.h / o.w;
       const fx = c.includes('w') ? o.x + o.w : o.x, fy = c.includes('n') ? o.y + o.h : o.y;
@@ -1579,8 +1582,8 @@ function editarFoto(f, lim = FOTO_MAX) {
          .map(([txt, l, a]) => el('button', {class: 'btn', title: `Cabe em ${virg(l)} × ${virg(a)} cm`, onclick: () => caberNaCaixa(l, a)}, txt))]
     : lim === FOTO_HIST ? [preset('4,4 × 2,5', 4.4, 2.5), preset('3,3 × 2,5', 3.3, 2.5), preset('Em pé 1,9 × 2,5', 1.9, 2.5)]
     : lim === FOTO_LADO
-      ? [preset('4,0 × 7', 3.98, 7), preset('4,0 × 5', 3.98, 5), preset('4,0 × 3', 3.98, 3)]
-      : [preset('8,1 × 7', 8.1, 7), preset('8,1 × 6', 8.1, 6), preset('8,1 × 5', 8.1, 5), preset('Em pé 5,25 × 7', 5.25, 7)];
+      ? [preset('4,0 × 7,4', 3.98, 7.4), preset('4,0 × 5', 3.98, 5), preset('4,0 × 3', 3.98, 3)]
+      : [preset('8,1 × 7,4', 8.1, 7.4), preset('8,1 × 6', 8.1, 6), preset('8,1 × 5', 8.1, 5), preset('Página inteira 8,1 × 15,3', 8.1, 15.3)];
   // ---- painel MELHORAR FOTO (à direita do palco) ----
   const mostrarNaTela = url => { imgFora.src = url; imgDentro.src = url; };
   const prepararBase = () => {
@@ -3064,7 +3067,7 @@ function edEtapa(e, i) {
         if (rAntes) { girarFormas(f.formas, rAntes); f.img = await formasNaURL(f.img, f.formas); }   // as formas desenhadas giram junto
         delete f.corte; delete f.largura; delete f.altura; f.aspecto = await aspectoDe(f.img); mudou(true);
       }}, '↻'),
-      el('button', {class: 'btn mini', title: limiteFotos(e, j) === FOTO_LADO ? 'Cortar e redimensionar (máx. 4,0 × 7 cm)' : 'Cortar e redimensionar (máx. 8,1 × 7 cm)', onclick: () => editarFoto(f, limiteFotos(e, j))}, 'Ajustar'),
+      el('button', {class: 'btn mini', title: limiteFotos(e, j) === FOTO_LADO ? 'Cortar e redimensionar (máx. 4,0 × 15,3 cm)' : 'Cortar e redimensionar (máx. 8,1 × 15,3 cm)', onclick: () => editarFoto(f, limiteFotos(e, j))}, 'Ajustar'),
       el('button', {class: 'btn mini perigo', title: 'Remover foto', onclick: async () => { if (await perguntar(`Remover a foto ${j + 1} da etapa ${i + 1}?`, {sim: 'REMOVER', titulo: 'REMOVER FOTO'})) { e.fotos.splice(j, 1); (e.juntar || []).splice(j, 1); mudou(true); } }}, '✕'))),
     // entre uma foto e a seguinte: juntar as duas lado a lado
     e.fotos[j + 1] ? el('label', {class: 'check par-ed' + (ini[j - 1] ? ' bloqueado' : ''), title: ini[j - 1] ? `A foto ${j + 1} já está lado a lado com a foto ${j}` : ''},
@@ -3074,7 +3077,7 @@ function edEtapa(e, i) {
         if (ev.target.checked) e.juntar[j + 1] = false;   // a foto seguinte não pode estar em outro par
         mudou(true);
       }}),
-      `Fotos ${j + 1} e ${j + 2} lado a lado (máx. 4,0 × 7 cm cada)`) : null]));
+      `Fotos ${j + 1} e ${j + 2} lado a lado (máx. 4,0 cm de largura cada)`) : null]));
   const subs = e.sublinhas.map((s, j) => el('div', {class: 'sublinha', 'data-campo': 'recurso-' + j},
     el('select', {onchange: ev => { s.tipo = ev.target.value; mudou(true); }}, TIPOS_SUB.map(t => el('option', {value: t, selected: s.tipo === t}, t))),
     el('input', {type: 'text', value: s.valor || '', placeholder: 'Separe vários itens com ;', oninput: ev => { s.valor = ev.target.value; mudou(); }}),
@@ -3571,7 +3574,7 @@ function dividirEtapa(e, meiaLivre = false) {
     // fotos: entram quantas couberem no tamanho ajustado de cada uma (sem precisar reduzir);
     // se nem a primeira couber, ela entra sozinha e é reduzida
     const legOn = doc.opcoes.legendaFotos;
-    const altGrupo = g => Math.max(...g.map(f => { const t = tamanhoFoto(f, FOTO_MAX.alt, g.length === 2 ? FOTO_LADO : FOTO_MAX); return t ? t.h : FOTO_MAX.alt; }));
+    const altGrupo = g => Math.max(...g.map(f => { const t = tamanhoFoto(f, FOTO_MAX.alt, g.length === 2 ? FOTO_LADO : FOTO_MAX); return t ? t.h : FOTO_MAX.auto; }));
     let nF = 0;
     while (iF + nF < fotos.length) {
       const gs = fotos.slice(iF, iF + nF + 1), res = legOn ? gs.reduce((s, g) => s + reservaLegenda(g), 0) : 0;
@@ -3703,7 +3706,7 @@ function alturaLegenda(texto, largMm) {
 function vaoFotos() { return doc.opcoes.legendaFotos ? 0.65 : 3; }
 // soma das alturas (07/11/2026): cada linha de fotos fica na altura dela; só se a soma passar do espaço livre
 // (já sem legendas e espaços) é que todas diminuem na mesma proporção. Antes cada linha tinha uma parte igual da coluna.
-function altNatGrupo(g) { return Math.max(...g.map(f => { const t = tamanhoFoto(f, FOTO_MAX.alt, g.length === 2 ? FOTO_LADO : FOTO_MAX); return t ? t.h : FOTO_MAX.alt; })); }
+function altNatGrupo(g) { return Math.max(...g.map(f => { const t = tamanhoFoto(f, FOTO_MAX.alt, g.length === 2 ? FOTO_LADO : FOTO_MAX); return t ? t.h : FOTO_MAX.auto; })); }
 function alturasLinhas(grupos, livre) {
   const nat = grupos.map(altNatGrupo), soma = nat.reduce((s, x) => s + x, 0);
   const k = soma > livre && soma > 0 ? Math.max(0, livre) / soma : 1;

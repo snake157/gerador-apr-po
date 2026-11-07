@@ -188,7 +188,7 @@ async function gerarWord() {
         const m = await img(f.img);
         if (!m) continue;
         const fa = f.aspecto ? f : Object.assign({}, f, {aspecto: m.w / m.h});
-        const t = tamanhoFoto(fa, maxH, lim) || caberEm(fa.aspecto, lim.larg, Math.min(lim.alt, maxH));
+        const t = tamanhoFoto(fa, maxH, lim) || caberEm(fa.aspecto, lim.larg, Math.min(lim.auto || lim.alt, maxH));
         const legenda = leg ? `FOTO ${pad2(f.num)}` + (f.legenda ? ` – ${f.legenda}` : '') : '';
         partes.push({xml: par(desenho(m, t.w, t.h, true)) + (legenda ? txt(legenda, {sz: 6.5, b: true, antes: TW(0.7), linha: 140, exata: true}) : ''), w: t.w, h: t.h});   // legenda: 1 mm visível da foto até as letras (06/11/2026)
       }

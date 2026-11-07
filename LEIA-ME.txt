@@ -121,8 +121,8 @@ SUMÁRIO
 ==================================================================================================
 4. FOTOS E ANEXOS DO PO
 ==================================================================================================
-- Fotos da etapa: "↻" gira, "AJUSTAR" corta e define o tamanho no PO (máximo 8,1 × 7 cm). Sem ajuste, a foto
-  entra inteira, cabendo em 8,1 × 7 cm. No editor da foto, "AUTOMÁTICO" usa o tamanho do AJUSTAR FOTOS.
+- Fotos da etapa: "↻" gira, "AJUSTAR" corta e define o tamanho no PO (máximo 8,1 × 15,3 cm). Sem ajuste, a foto
+  entra inteira, cabendo em 8,1 × 7,4 cm. No editor da foto, "AUTOMÁTICO" usa o tamanho do AJUSTAR FOTOS.
   "REDUZIR AO CORTE" (antes "Encaixar inteira") diminui a foto até caber inteira no corte; as sobras ficam brancas.
 - MELHORAR FOTO (no editor da foto, última linha de botões): abre um painel à direita da foto para corrigir foto
   desbotada ou escura, sem IA e sem internet. Abre sem ajuste; "AUTOMÁTICO" mede a foto e escolhe os valores,
@@ -156,7 +156,8 @@ SUMÁRIO
   ou o botão "COLAR". Com o mouse sobre uma miniatura, Ctrl+V troca aquela foto. Vale para fotos das etapas,
   imagens dos anexos e foto do histórico.
 - AJUSTAR FOTOS (botão entre o Cabeçalho e as Etapas): abre uma janela no canto da tela para ajustar de uma vez
-  o tamanho e o corte das fotos das etapas. Medidas: foto individual até 8,1 × 7 cm, lado a lado 4,0 × 7 cm,
+  o tamanho e o corte das fotos das etapas. Medidas: padrão 8,1 × 7,4 cm (individual) e 4,0 × 7,4 cm (lado a lado); altura máxima 15,3 cm
+  (o que cabe na página inteira; com legenda maior ou mais fotos, a foto encolhe sozinha);
   corte pelo centro. Com 8,1 cm a foto individual fica com a mesma largura de duas lado a lado mais o
   espaço de 1,4 mm entre elas; sobram 1,4 mm nas laterais, e com as fotos no limite de altura, 1,4 mm em cima
   e embaixo; entre linhas de fotos ficam 3 mm fixos
