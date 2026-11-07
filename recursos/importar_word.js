@@ -684,6 +684,9 @@ const IMPORTAR = (() => {
     [/^CINTO (DE SEGURANCA )?(TIPO )?PARA ?QUEDISTA$/, 'Cinto de segurança Paraquedista'],
     [/^OCULOS (DE )?(PROTECAO|SEGURANCA)$/, 'Óculos de Segurança'],
     [/^LUVA (DE MALHA )?(COM PALMA )?(EM )?PU$/, 'Luva de Malha com Palma em PU'],
+    // pedido do usuário (07/11/2026): mesmo pictograma da luva de vaqueta / do protetor facial transparente
+    [/^LUVA (DE )?(MULTI ?TATO|NEOPRENE|BORRACHA)$/, 'Luva de Vaqueta'],
+    [/^PROTE[TR]OR FACIAL$/, 'Protetor Facial Transparente'],
   ];
   function epiPorNome(texto) {
     const tn = norm(texto).replace(/[^A-Z0-9]+/g, ' ').trim();
@@ -1040,6 +1043,14 @@ const IMPORTAR = (() => {
           if (j && /[A-Za-zÀ-ú]{3}/.test(textoCel(x.tc))) break;   // um "l" solto na célula das imagens não é rótulo
           srcs.push(...await imagensDe(x.tc, ctx));
         }
+        // placas antigas coladas nos EPIs básicos ("PROIBIDO USO DE ADORNOS", "USO OBRIGATÓRIO DE: UNIFORME DO TRABALHO"):
+        // são bem mais largas que altas e não se usam mais; ficam de fora (07/11/2026, pedido do usuário)
+        let placas = 0;
+        for (let i = srcs.length - 1; i >= 0; i--) {
+          const im = await carregar(srcs[i]);
+          if (im && im.naturalWidth > 1.8 * im.naturalHeight) { srcs.splice(i, 1); placas++; }
+        }
+        if (placas) avisos.push(`EPI's básicos: ${placas} placa(s) antiga(s) (ex.: "Proibido uso de adornos") ficaram de fora; não são pictogramas de EPI.`);
         if (srcs.length) {
           basicosAchados = true;
           const itens = await pictogramas(srcs, 'epi', []);
