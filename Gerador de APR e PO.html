@@ -3118,7 +3118,8 @@ function edEtapa(e, i) {
     el('div', {class: 'sub', 'data-campo': 'epis'}, "EPI's específicos"),
     el('div', {class: 'chips'}, e.epis.map((p, j) => chipPicto(p, imgEpi(p), e.epis, j, 'epi-' + j, 'epi'))),
     el('div', {class: 'linha-botoes'}, el('button', {class: 'btn', onclick: () => abrirSeletor('Adicionar EPI específico', listaEpis(), nome => { e.epis.push({nome, rotulo: rotuloPadrao(nome)}); mudou(true); })}, '+ EPI')));
-  card.addEventListener('focusin', () => irParaBloco(e.id));
+  // a caixa POSIÇÃO DAS FOTOS não rola a prévia ao receber o foco: quem rola é a troca de opção, só se precisar (07/11/2026)
+  card.addEventListener('focusin', ev => { if (!ev.target.closest('.pos-fotos')) irParaBloco(e.id); });
   return card;
 }
 
