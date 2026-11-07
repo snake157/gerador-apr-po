@@ -1,6 +1,6 @@
 // Cloudflare Workers: o site (arquivos estáticos desta pasta) + o carteiro dos envios em /api/...
 {
-  "name": "gerador-apr-po",
+  "name": "gerador",
   "main": "worker.js",
   "compatibility_date": "2026-10-01",
   "assets": {

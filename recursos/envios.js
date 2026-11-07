@@ -6,7 +6,7 @@
 
 const ENVIOS = (() => {
   // no site do Cloudflare o carteiro está no mesmo endereço; aberto de outro lugar (GitHub Pages, cópia no PC), usa o do Cloudflare
-  const SITE = 'https://gerador-apr-po.erisvaldo-isidorio.workers.dev';
+  const SITE = 'https://gerador.erisvaldo-isidorio.workers.dev';
   const API = (/\.(pages|workers)\.dev$/.test(location.hostname) ? location.origin : SITE) + '/api/';
   const PD = {1: '1 - Incômodo', 2: '2 - Primeiros socorros', 3: '3 - Reversível com afastamento', 4: '4 - Grave / irreversível parcial', 5: '5 - Fatal'};
   const guardado = k => { try { return localStorage.getItem(k) || ''; } catch (e) { return ''; } };
