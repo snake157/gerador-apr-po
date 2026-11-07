@@ -125,6 +125,18 @@ const APR = (() => {
     'Atropelamento': 'Atropelamento, colisão.', 'Atropelamento, Batida Contra': 'Atropelamento, colisão.',
     'Queda de materiais, Batida Contra e Atropelamento': 'Atropelamento, colisão.',
     'Queda de nível diferente': 'Queda de nível diferente e queda de materiais.',
+    // restantes, sugestões aprovadas pelo usuário (07/11/2026)
+    'Projeção, batida contra': 'Resvalamento e Projeções',
+    'Contato com material cortante ou perfurante, Tropeções, Movimentação de carga, queda de materiais': 'Contato com material cortante ou perfurante.',
+    'Queda de nível diferente, Queda de materiais, Batida Contra': 'Queda de nível diferente e queda de materiais.',
+    'Projeção de escória': 'Projeção, Respingo ou Transbordo de Metal Líquido',
+    'Chuvas intensas': 'Exposição a condições climáticas adversas (exposição ao sol, frio, chuva e etc)',
+    'Projeção': 'Projeção de Fagulhas, Cavacos ou Partículas Volantes.',
+    'Tropeços, quedas, batida contra': 'Quedas, Esbarrões e Tropeços',
+    'Queda de material, tropeços e quedas': 'Quedas, Esbarrões e Tropeços',
+    'Esforço Físico, queda do material': 'Postura Inadequada no Trabalho e Esforço físico excessivo',
+    'Atropelamento, Queda de material': 'Atropelamento, colisão.',
+    'Exposição a poeiras sem proteção': 'Inalação de aerodispersoides.',
   };
   let trocas = null;
   function perigoDaTabela(perigo, pd) {
