@@ -368,7 +368,7 @@ async function gerarExcel() {
     // espaço fixo entre as linhas de fotos (3 mm sem legenda; 1 mm com legenda), conjunto centralizado na altura da célula
     const vao = vaoFotos() * ESC + sobraDistribuir(b.etapa, linhasF.length, alt - soma - vaoFotos() * ESC * (linhasF.length - 1));   // DISTRIBUIR (07/11/2026)
     let y = topo + Math.max(0, (alt - soma - vao * (linhasF.length - 1)) / 2);
-    const xF = p.esquerda(L(3)), wF = p.largura(L(3), L(5)), gapX = 3 * ESC;
+    const xF = p.esquerda(L(3)), wF = p.largura(L(3), L(5)), gapX = 1.4 * ESC;   // 1,4 mm entre as fotos lado a lado (07/11/2026)
     for (const lf of linhasF) {
       let x = xF + (wF - (lf.larg + gapX * (lf.fs.length - 1))) / 2;
       for (const f of lf.fs) {

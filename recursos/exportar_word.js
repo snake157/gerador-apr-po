@@ -192,8 +192,8 @@ async function gerarWord() {
         const legenda = leg ? `FOTO ${pad2(f.num)}` + (f.legenda ? ` – ${f.legenda}` : '') : '';
         partes.push({xml: par(desenho(m, t.w, t.h, true)) + (legenda ? txt(legenda, {sz: 6.5, b: true, antes: TW(0.7), linha: 140, exata: true}) : ''), w: t.w, h: t.h});   // legenda: 1 mm visível da foto até as letras (06/11/2026)
       }
-      // lado a lado: célula de cada foto = foto + margens (0,5 mm de cada lado) e uma coluna de 2 mm no meio: 3 mm entre as fotos
-      if (partes.length === 2) linhasXml.push(tabelaSemBorda([TW(Math.max(partes[0].w, 30) + 1), TW(2), TW(Math.max(partes[1].w, 30) + 1)], [partes[0].xml, '<w:p/>', partes[1].xml]));
+      // lado a lado: célula de cada foto = foto + margens (0,5 mm de cada lado) e uma coluna de 0,4 mm no meio: 1,4 mm entre as fotos (07/11/2026)
+      if (partes.length === 2) linhasXml.push(tabelaSemBorda([TW(Math.max(partes[0].w, 30) + 1), TW(0.4), TW(Math.max(partes[1].w, 30) + 1)], [partes[0].xml, '<w:p/>', partes[1].xml]));
       else if (partes.length) linhasXml.push(partes[0].xml);
       // altura real da linha no Word: foto + folga da linha da imagem (~0,6 mm) + legenda (linhas de 7 pt + 0,7 mm acima)
       if (partes.length) altsReais.push(Math.max(...partes.map(p => p.h)) + 0.6 + (leg ? (reservaLegenda(g) - 0.7) * 2.47 / 2.29 + 0.7 : 0));
