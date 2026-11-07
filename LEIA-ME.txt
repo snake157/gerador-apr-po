@@ -1,5 +1,8 @@
 ﻿GERADOR DE APR E PO - como usar
 
+MANUAL COM FOTOS: abra "Manual do Gerador.html" (na mesma pasta) ou use Menu > MANUAL no gerador.
+Este LEIA-ME é o resumo em texto do mesmo conteúdo.
+
 SUMÁRIO
   1. COMEÇAR
   2. ABA APR
@@ -348,6 +351,7 @@ SUMÁRIO
 ==================================================================================================
 - Pictogramas: imagens dos perigos e EPIs, a biblioteca (biblioteca.js) usada pelo gerador e os pictogramas
   aprendidos (aprendidos.js).
+- Manual do Gerador.html: o manual com fotos (as fotos ficam em recursos\manual).
 - recursos: arquivos de funcionamento do gerador (não mexer) e o "Exemplo - Modelo Padrão.po.json", que reproduz
   o PO.XX.000 - Modelo Padrão_Rev01 para teste. O modelo da APR em Excel fica dentro de recursos\modelo_apr.js.
 - Ao enviar o gerador para alguém, envie a pasta "Gerador de PO" inteira.

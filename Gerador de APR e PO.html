@@ -3242,6 +3242,8 @@ function trocarAba(a) {
   ed.classList.add(a === 'po' ? 'entra-d' : 'entra-e'); pv.classList.add('entra');
   clearTimeout(trocarAba.t); trocarAba.t = setTimeout(() => { ed.classList.remove('entra-d', 'entra-e'); pv.classList.remove('entra'); }, 300);
 }
+// Menu > MANUAL (07/11/2026): o manual ilustrado fica ao lado do gerador, na mesma pasta (e no site)
+function abrirManual() { window.open('Manual do Gerador.html', '_blank'); }
 function renderEditor() {
   const ed = $('#editor');
   if (abaAtual === 'apr' && typeof APR === 'undefined') abaAtual = 'po';
@@ -3263,7 +3265,7 @@ function renderEditor() {
           null,
           ['Atualizar biblioteca', () => ATUALIZAR_BIB.executar(), 'Ler a pasta Pictogramas e atualizar os pictogramas'],
           ['Configurar Gemini', configurarRevisor, 'Chave do Gemini usada pelos botões ORTOGRAFIA / GRAMÁTICA e MELHORAR TEXTO'],
-        ]).map(it => it ? el('button', {class: it[3] || '', title: it[2], onclick: () => { fecharMenu(); it[1](); }}, it[0]) : el('div', {class: 'sep-menu'})))),
+        ]).concat([null, ['Manual', abrirManual, 'Abre o manual com fotos (Manual do Gerador.html) em outra aba']]).map(it => it ? el('button', {class: it[3] || '', title: it[2], onclick: () => { fecharMenu(); it[1](); }}, it[0]) : el('div', {class: 'sep-menu'})))),
       // chave APR | PO no centro da barra; o título desce para a linha do status (21/10/2026)
       el('div', {class: 'chave-abas'}, [['apr', 'APR'], ['po', 'PO']].map(([a, t]) => el('button', {class: abaAtual === a ? 'on' : '', title: a === 'apr' ? 'Análise Preliminar de Riscos' : 'Procedimento Operacional', onclick: () => { if (abaAtual !== a) trocarAba(a); }}, t))),
       el('div', {class: 'acoes-barra'},
