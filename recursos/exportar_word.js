@@ -173,14 +173,15 @@ async function gerarWord() {
     const H = PAG[b.tam], nS = b.subs.length;
     const leg = doc.opcoes.legendaFotos ? 5 : 0;
     const reserva = b.grupos.reduce((s, g) => s + reservaLegenda(g), 0);
-    const maxH = b.grupos.length ? Math.min(FOTO_MAX.alt, (H - 4 - reserva - vaoFotos() * (b.grupos.length - 1)) / b.grupos.length - 1) : 0;
+    const nLin = b.grupos.length, livre = H - 4 - reserva - vaoFotos() * (nLin - 1) - nLin;
+    const alts = alturasLinhas(b.grupos, livre);   // soma das alturas (07/11/2026)
     // fotos
     // espaço fixo entre as linhas de fotos (só entre elas: o conjunto fica centralizado na célula):
     // 3 mm sem legenda; com legenda, 1 mm visível das letras até a foto de baixo (06/11/2026)
     const vao3 = `<w:p><w:pPr><w:spacing w:before="0" w:after="0" w:line="${TW(vaoFotos())}" w:lineRule="exact"/><w:rPr><w:sz w:val="2"/></w:rPr></w:pPr></w:p>`;
-    let fotos = '';
-    for (const g of b.grupos) {
-      if (fotos) fotos += vao3;
+    const linhasXml = [], altsReais = [];
+    for (const [gi, g] of b.grupos.entries()) {
+      const maxH = alts[gi];
       const partes = [];
       for (const f of g) {
         const lim = g.length === 2 ? FOTO_LADO : FOTO_MAX;
@@ -189,12 +190,18 @@ async function gerarWord() {
         const fa = f.aspecto ? f : Object.assign({}, f, {aspecto: m.w / m.h});
         const t = tamanhoFoto(fa, maxH, lim) || caberEm(fa.aspecto, lim.larg, Math.min(lim.alt, maxH));
         const legenda = leg ? `FOTO ${pad2(f.num)}` + (f.legenda ? ` – ${f.legenda}` : '') : '';
-        partes.push({xml: par(desenho(m, t.w, t.h, true)) + (legenda ? txt(legenda, {sz: 6.5, b: true, antes: TW(0.7), linha: 140, exata: true}) : ''), w: t.w});   // legenda: 1 mm visível da foto até as letras (06/11/2026)
+        partes.push({xml: par(desenho(m, t.w, t.h, true)) + (legenda ? txt(legenda, {sz: 6.5, b: true, antes: TW(0.7), linha: 140, exata: true}) : ''), w: t.w, h: t.h});   // legenda: 1 mm visível da foto até as letras (06/11/2026)
       }
       // lado a lado: célula de cada foto = foto + margens (0,5 mm de cada lado) e uma coluna de 2 mm no meio: 3 mm entre as fotos
-      if (partes.length === 2) fotos += tabelaSemBorda([TW(Math.max(partes[0].w, 30) + 1), TW(2), TW(Math.max(partes[1].w, 30) + 1)], [partes[0].xml, '<w:p/>', partes[1].xml]);
-      else if (partes.length) fotos += partes[0].xml;
+      if (partes.length === 2) linhasXml.push(tabelaSemBorda([TW(Math.max(partes[0].w, 30) + 1), TW(2), TW(Math.max(partes[1].w, 30) + 1)], [partes[0].xml, '<w:p/>', partes[1].xml]));
+      else if (partes.length) linhasXml.push(partes[0].xml);
+      // altura real da linha no Word: foto + folga da linha da imagem (~0,6 mm) + legenda (linhas de 7 pt + 0,7 mm acima)
+      if (partes.length) altsReais.push(Math.max(...partes.map(p => p.h)) + 0.6 + (leg ? (reservaLegenda(g) - 0.7) * 2.47 / 2.29 + 0.7 : 0));
     }
+    // DISTRIBUIR (07/11/2026): a sobra vai em partes iguais para os espaços entre as linhas; a célula centralizada põe a mesma parte em cima e embaixo
+    const extra = 0.9 * sobraDistribuir(b.etapa, linhasXml.length, H - 1 - altsReais.reduce((s, x) => s + x, 0) - vaoFotos() * (linhasXml.length - 1));   // 10% de folga para o Word não cortar
+    const vao = extra ? vao3.replace(`w:line="${TW(vaoFotos())}"`, `w:line="${TW(vaoFotos() + extra)}"`) : vao3;
+    const fotos = linhasXml.join(vao);
     // descrição
     // cada linha: marcador e recuo do nível (4 mm por nível), alinhamento escolhido no editor
     const desc = b.bullets.map(it => par((it.mk ? run(it.mk + '\t', {sz: 8}) : '') + runsDescricao(it.html),

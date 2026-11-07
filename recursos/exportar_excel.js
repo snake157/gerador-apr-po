@@ -347,9 +347,10 @@ async function gerarExcel() {
     // fotos (mesmos tamanhos do PDF)
     const leg = doc.opcoes.legendaFotos ? 5 : 0;
     const reserva = b.grupos.reduce((s, g) => s + reservaLegenda(g), 0);
-    const maxH = b.grupos.length ? Math.min(FOTO_MAX.alt, (ALT[b.tam] - 3 - reserva - vaoFotos() * (b.grupos.length - 1)) / b.grupos.length - 0.5) : 0;
+    const alts = alturasLinhas(b.grupos, ALT[b.tam] - 3 - reserva - vaoFotos() * (b.grupos.length - 1) - 0.5 * b.grupos.length);   // soma das alturas (07/11/2026)
     const linhasF = [];
-    for (const g of b.grupos) {
+    for (const [gi, g] of b.grupos.entries()) {
+      const maxH = alts[gi];
       const fs = [];
       for (const f of g) {
         const lim = g.length === 2 ? FOTO_LADO : FOTO_MAX;
@@ -365,7 +366,7 @@ async function gerarExcel() {
     }
     const soma = linhasF.reduce((s, x) => s + x.alt, 0);
     // espaço fixo entre as linhas de fotos (3 mm sem legenda; 1 mm com legenda), conjunto centralizado na altura da célula
-    const vao = vaoFotos() * ESC;
+    const vao = vaoFotos() * ESC + sobraDistribuir(b.etapa, linhasF.length, alt - soma - vaoFotos() * ESC * (linhasF.length - 1));   // DISTRIBUIR (07/11/2026)
     let y = topo + Math.max(0, (alt - soma - vao * (linhasF.length - 1)) / 2);
     const xF = p.esquerda(L(3)), wF = p.largura(L(3), L(5)), gapX = 3 * ESC;
     for (const lf of linhasF) {

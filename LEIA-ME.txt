@@ -160,6 +160,10 @@ SUMÁRIO
   corte pelo centro. Com 7,9 cm a foto individual fica com a mesma largura de duas lado a lado mais o
   espaço de 3 mm entre elas (borda lateral igual nos dois casos); entre linhas de fotos ficam 3 mm fixos
   sem legenda; com legenda, 1 mm da foto até a legenda e 1 mm da legenda até a foto de baixo (prévia, PDF e Word).
+  POSIÇÃO DAS FOTOS (em cada etapa, abaixo de + FOTOS e COLAR): DISTRIBUIR (padrão) divide o espaço que sobra
+  em partes iguais em cima, entre as fotos e embaixo; CENTRALIZADO deixa as fotos juntas no meio.
+  Quebra de página: cabem as fotos enquanto a SOMA das alturas (fotos + legendas + espaços) não passa da coluna;
+  cada foto fica na altura dela (máximo 7 cm).
   Com a janela aberta, as fotos ficam marcadas (verde = AJUSTADA, laranja = MANTIDA).
 - Anexos: até 8 imagens por anexo (até 4 na linha superior e 4 na inferior). Em cada imagem, escolha a linha e
   use "AJUSTAR" para recortar e definir o tamanho (ou deixe automático).

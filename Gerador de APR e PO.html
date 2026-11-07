@@ -169,7 +169,8 @@ textarea{resize:vertical}
 .bloco .foto img{max-width:80mm;object-fit:contain;border:.3mm solid #000;display:block}
 .par-fotos{display:flex;justify-content:center;align-items:flex-start;gap:3mm}
 .legenda-foto{font-size:6.5pt;font-weight:700;margin-top:.7mm;line-height:1;text-align:center;max-width:78mm}   /* 1 mm visível da foto até as letras (06/11/2026) */
-.bloco .c-fotos.com-leg{gap:.65mm}   /* com legenda: 1 mm visível das letras até a foto de baixo (06/11/2026) */
+.bloco .c-fotos.com-leg{gap:.65mm}
+.bloco .c-fotos.distribuir{justify-content:space-evenly}   /* DISTRIBUIR: a sobra em partes iguais em cima, entre as fotos e embaixo (07/11/2026) */   /* com legenda: 1 mm visível das letras até a foto de baixo (06/11/2026) */
 .c-pontos{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3mm}
 .c-pontos img,.c-pontos svg{width:13mm;height:13mm;object-fit:contain}
 .c-desc{display:flex;flex-direction:column;justify-content:center;padding:1.5mm 1.5mm}
@@ -663,7 +664,7 @@ const MMPX = (() => { const d = el('div', {style: 'position:absolute;height:100m
 
 // ---------------- documento ----------------
 function novaEtapa() {
-  return {id: uid(), nome: '', tamanho: 'auto', pontos: ['seguranca'], juntar: [], marcador: 'bolinha', fotos: [], descricao: '', descHtml: true, sublinhas: [], perigos: [], epis: []};
+  return {id: uid(), nome: '', tamanho: 'auto', pontos: ['seguranca'], juntar: [], posFotos: 'distribuir', marcador: 'bolinha', fotos: [], descricao: '', descHtml: true, sublinhas: [], perigos: [], epis: []};
 }
 function novoDoc() {
   return {
@@ -3098,6 +3099,8 @@ function edEtapa(e, i) {
     el('div', {class: 'sub', 'data-campo': 'fotos'}, 'Fotos'),
     areaColar(colarFotos, fotos,
       el('div', {class: 'linha-botoes'}, el('button', {class: 'btn', onclick: () => escolherImagens(true, colarFotos)}, '+ Fotos'), botaoColar(colarFotos))),
+    // POSIÇÃO DAS FOTOS da etapa, abaixo de + FOTOS e COLAR (07/11/2026)
+    el('div', {class: 'pos-fotos'}, selecao('Posição das fotos', e, 'posFotos', [['distribuir', 'DISTRIBUIR'], ['centro', 'CENTRALIZADO']])),
     el('div', {class: 'sub', 'data-campo': 'descricao'}, 'Descrição'),
     el('div', {class: 'dica'}, 'Um item por linha (Enter cria o próximo, com o mesmo marcador). Tab / Shift+Tab mudam o nível; Enter numa linha vazia ou Backspace no começo tiram o marcador.'),
     editorTexto(e),
@@ -3569,8 +3572,9 @@ function dividirEtapa(e, meiaLivre = false) {
     let nF = 0;
     while (iF + nF < fotos.length) {
       const gs = fotos.slice(iF, iF + nF + 1), res = legOn ? gs.reduce((s, g) => s + reservaLegenda(g), 0) : 0;
-      const maxH = Math.min(FOTO_MAX.alt, (H - 3 - res - vaoFotos() * (gs.length - 1)) / gs.length);   // a mesma conta do desenho da página
-      if (gs.some(g => altGrupo(g) > maxH + 0.05)) break;
+      // soma das alturas (07/11/2026): cabem enquanto fotos + legendas + espaços não passam da coluna (a mesma conta do desenho da página)
+      const livre = H - 3 - res - vaoFotos() * (gs.length - 1);
+      if (gs.reduce((s, g) => s + altGrupo(g), 0) > livre + 0.05) break;
       nF++;
     }
     if (!nF && iF < fotos.length) nF = 1;
@@ -3694,6 +3698,17 @@ function alturaLegenda(texto, largMm) {
 }
 // espaço (mm) entre as linhas de fotos: 3 mm sem legenda; com legenda, 1 mm visível das letras até a foto de baixo (06/11/2026)
 function vaoFotos() { return doc.opcoes.legendaFotos ? 0.65 : 3; }
+// soma das alturas (07/11/2026): cada linha de fotos fica na altura dela; só se a soma passar do espaço livre
+// (já sem legendas e espaços) é que todas diminuem na mesma proporção. Antes cada linha tinha uma parte igual da coluna.
+function altNatGrupo(g) { return Math.max(...g.map(f => { const t = tamanhoFoto(f, FOTO_MAX.alt, g.length === 2 ? FOTO_LADO : FOTO_MAX); return t ? t.h : FOTO_MAX.alt; })); }
+function alturasLinhas(grupos, livre) {
+  const nat = grupos.map(altNatGrupo), soma = nat.reduce((s, x) => s + x, 0);
+  const k = soma > livre && soma > 0 ? Math.max(0, livre) / soma : 1;
+  return nat.map(x => x * k);
+}
+// POSIÇÃO DAS FOTOS da etapa (07/11/2026): DISTRIBUIR (padrão) divide a sobra em partes iguais em cima, entre as linhas e embaixo
+const distribuirFotos = e => (e.posFotos || 'distribuir') !== 'centro';
+function sobraDistribuir(e, nLin, sobra) { return distribuirFotos(e) && nLin > 1 && sobra > 0 ? sobra / (nLin + 1) : 0; }
 function reservaLegenda(g) {
   if (!doc.opcoes.legendaFotos) return 0;
   return 0.7 + Math.max(...g.map(f => {
@@ -3708,22 +3723,22 @@ function blocoEtapa(b, numEtapa) {
   const nLin = b.grupos.length;
   const leg = doc.opcoes.legendaFotos ? 5 : 0;
   const reservaLeg = b.grupos.reduce((s, g) => s + reservaLegenda(g), 0);
-  const maxH = nLin ? Math.min(FOTO_MAX.alt, (H - 3 - reservaLeg - vaoFotos() * (nLin - 1)) / nLin) : 0;   // espaço fixo entre as linhas de fotos (vaoFotos)
-  const umaFoto = (f, lim) => {
+  const alts = alturasLinhas(b.grupos, H - 3 - reservaLeg - vaoFotos() * (nLin - 1));   // soma das alturas; espaço fixo entre as linhas (vaoFotos)
+  const umaFoto = (f, lim, maxH) => {
     const t = tamanhoFoto(f, maxH, lim);
     return el('div', {class: 'foto', 'data-alvo': 'foto-' + f.idx},
       el('img', {src: f.img, alt: '', style: estiloFoto(f, maxH, lim), class: marcasFoto.has(f.img) ? 'marca-' + marcasFoto.get(f.img) : null}),
       leg ? el('div', {class: 'legenda-foto', style: lim === FOTO_LADO ? `max-width:${(t ? Math.max(t.w, 30) : lim.larg).toFixed(1)}mm` : ''},
         `FOTO ${pad2(f.num)}` + (f.legenda ? ` – ${f.legenda}` : '')) : null);
   };
-  const fotos = b.grupos.map(g => g.length === 2 ? el('div', {class: 'par-fotos'}, g.map(f => umaFoto(f, FOTO_LADO))) : umaFoto(g[0], FOTO_MAX));
+  const fotos = b.grupos.map((g, k) => g.length === 2 ? el('div', {class: 'par-fotos'}, g.map(f => umaFoto(f, FOTO_LADO, alts[k]))) : umaFoto(g[0], FOTO_MAX, alts[k]));
   const linhas = ['1fr', ...b.hSubs.map(h => h.toFixed(2) + 'mm')].join(' ');
   const tudo = `1/${nS + 2}`;
   return el('div', {class: 'g17 bloco', 'data-etapa': b.etapa.id, style: `height:${H}mm;grid-template-rows:${linhas}`, title: 'Clique para editar esta etapa'},
     el('div', {class: 'azul centro num', 'data-alvo': 'nome', style: pos('1/2', tudo)}, numEtapa),
     el('div', {class: 'azul', 'data-alvo': 'nome', style: pos('2/3', tudo)}, el('div', {class: 'fit c', 'data-fit': 5, style: 'font-size:5pt;line-height:1.1;font-weight:700;padding:1mm 0'},
       el('div', {class: 'vert'}, (b.etapa.nome || '').toUpperCase()))),
-    el('div', {class: 'c-fotos' + (leg ? ' com-leg' : ''), 'data-alvo': 'fotos', style: pos('3/6', tudo)}, fotos),
+    el('div', {class: 'c-fotos' + (leg ? ' com-leg' : '') + (distribuirFotos(b.etapa) ? ' distribuir' : ''), 'data-alvo': 'fotos', style: pos('3/6', tudo)}, fotos),
     el('div', {class: 'c-pontos', 'data-alvo': 'pontos', style: pos('6/7', tudo)}, b.etapa.pontos.map(iconePonto)),
     el('div', {class: 'c-desc', 'data-alvo': 'descricao', style: pos('7/14', '1/2')}, b.bullets.length
       ? el('div', {class: 'desc'}, b.bullets.map(itemDescricao))
