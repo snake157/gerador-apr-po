@@ -3,6 +3,7 @@
 import { onRequestPost, onRequestOptions } from './functions/api/[acao].js';
 
 const GERADOR = '/Gerador%20de%20APR%20e%20PO.html';
+const MANUAL = '/Manual%20do%20Gerador.html';   // aberto pelo endereço curto /Manual (07/11/2026)
 
 async function arquivo(env, request, caminho) {
   const base = new URL(request.url);
@@ -22,6 +23,8 @@ export default {
       return new Response('Use POST', { status: 405 });
     }
     if (caminho === '/' || caminho === '/index.html' || caminho === '/index') return arquivo(env, request, GERADOR);
+    if (/^\/manual$/i.test(caminho)) return arquivo(env, request, MANUAL);
+    if (/^\/(manual\/|Manual%20do%20Gerador(\.html)?)$/i.test(caminho)) return Response.redirect(new URL('/Manual' + new URL(request.url).hash, request.url), 301);
     return env.ASSETS.fetch(request);
   },
 };

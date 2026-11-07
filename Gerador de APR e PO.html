@@ -3373,7 +3373,7 @@ function trocarAba(a) {
   clearTimeout(trocarAba.t); trocarAba.t = setTimeout(() => { ed.classList.remove('entra-d', 'entra-e'); pv.classList.remove('entra'); }, 300);
 }
 // Menu > MANUAL (07/11/2026): o manual ilustrado fica ao lado do gerador, na mesma pasta (e no site)
-function abrirManual() { window.open('Manual do Gerador.html', '_blank'); }
+function abrirManual() { window.open(/\.workers\.dev$/.test(location.hostname) ? '/Manual' : 'Manual do Gerador.html', '_blank'); }   // no site: endereço curto /Manual
 function renderEditor() {
   const ed = $('#editor');
   if (abaAtual === 'apr' && typeof APR === 'undefined') abaAtual = 'po';
