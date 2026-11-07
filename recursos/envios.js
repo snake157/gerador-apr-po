@@ -304,8 +304,9 @@ const ENVIOS = (() => {
               } catch (x) { b.disabled = false; b.textContent = 'Aprovar'; alert('Não consegui aprovar: ' + erroAmigavel(x)); if (x.status === 404) { item.remove(); vazio(); } }
             }}, 'Aprovar'),
             el('button', {class: 'btn', onclick: async ev => {
+              const b = ev.currentTarget;   // depois do await o evento já não tem o botão
               if (!(await perguntar(`Recusar "${novo ? e.perigo : e.nome}" enviado por ${e.autor}? O envio é apagado e nada muda no gerador.`, {sim: 'Recusar', nao: 'Voltar', titulo: 'Recusar envio'}))) return;
-              const b = ev.currentTarget; b.disabled = true;
+              b.disabled = true;
               try { await chamar('recusar', {senha, id: e.id}); item.remove(); atualizarTotal(); vazio(); }
               catch (x) { b.disabled = false; alert('Não consegui recusar: ' + erroAmigavel(x)); if (x.status === 404) { item.remove(); vazio(); } }
             }}, 'Recusar'))));
