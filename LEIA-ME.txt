@@ -59,11 +59,9 @@ SUMÁRIO
   campo, uma linha só com o "- " some.
 - Perigo: clique no campo e escolha na lista da tabela de Perigos e Riscos, igual à planilha (com "1 -", "2 -",
   "3 -"); dá para buscar pelo nome do perigo ou do risco (Enter escolhe o primeiro). O risco vem junto com o
-  perigo e não é editável. O PD vem da tabela e pode ser trocado; se mudar, o gerador mostra o da tabela e a
-  observação de quando ele muda.
-- A tabela vem da planilha "Perigos e Riscos ... .xlsx" da pasta recursos. Mudou a planilha? Aba APR > Menu >
-  "ATUALIZAR TABELA DE PERIGOS": o gerador lê a planilha e grava o recursos\perigos_riscos.js. Na primeira vez ele
-  pede a pasta "recursos" e depois lembra.
+  perigo e não é editável. O PD vem da tabela e pode ser trocado; se mudar, o gerador mostra o da tabela.
+- A tabela vem da planilha "Perigos e Riscos ... .xlsx" da pasta recursos. Perigo que não está na lista: Menu > "ENVIAR
+  PERIGO". Depois de aprovado, entra na tabela e na planilha para todos (item 9).
 - A prévia à direita é igual ao Excel: mesmas colunas, páginas, logotipo, cabeçalho e rodapé, e no fim as abas
   Ordem de Serviço, Controle de revisão e Matriz de Risco (que também vão no PDF).
 - "PENDÊNCIAS" lista o que falta preencher na APR (com "Ir para").
@@ -326,9 +324,12 @@ SUMÁRIO
 9. PICTOGRAMAS
 ==================================================================================================
 - Vêm das pastas Gerador de PO\Pictogramas\Perigos e Gerador de PO\Pictogramas\EPIs.
-- Se incluir ou renomear um pictograma, use Menu > "ATUALIZAR BIBLIOTECA" e escolha a pasta "Pictogramas" (o
-  navegador pede permissão para gravar nela o biblioteca.js). A biblioteca usada é a Pictogramas\biblioteca.js
-  (a cópia de reserva em recursos foi apagada em 07/11/2026).
+- Incluir ou mudar pictogramas e perigos (07/11/2026, vale para todos que usam o gerador):
+  Menu > "ENVIAR PICTOGRAMA" ou "ENVIAR PERIGO": qualquer pessoa envia (só escreve o nome); fica aguardando.
+  Menu > "APROVAR ENVIOS" (senha de aprovador): aprova (pode mudar tipo, nome, PD; SUBSTITUIR ou NOVO) ou recusa.
+  Menu > "ADMINISTRADOR" (senha de aprovador): inclui, edita e exclui perigos da tabela (Perigo, Risco, PD) e
+  pictogramas de perigo e de EPI; nada é gravado até "SALVAR ALTERAÇÕES". Todos veem em cerca de 1 minuto.
+  A biblioteca usada é a Pictogramas\biblioteca.js.
   (07/11/2026, gerador mais leve: o modelo da APR em Excel e o treino de pictogramas só são carregados quando
   usados; na tela, pictogramas grandes (ex.: vindos de um Word importado) aparecem numa cópia de 500 px, e o PDF,
   o Word e o Excel continuam com o original.)
