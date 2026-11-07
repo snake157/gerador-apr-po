@@ -1769,8 +1769,7 @@ const APR = (() => {
       ['Exportar PDF', pdf, 'Abre a impressão para salvar a APR em PDF', 'exp pdf'],
       ['Exportar Excel', () => exportar(), 'Salva a APR em .xlsx, no modelo da APR', 'exp xls'],
       null,
-      ['Atualizar Tabela de Perigos', atualizarTabela, 'Escolha a planilha de Perigos e Riscos (Excel) para atualizar a lista do gerador'],
-      null,
+      // 07/11/2026: "Atualizar Tabela de Perigos" saiu do Menu (perigos novos entram por ENVIAR PERIGO / APROVAR ENVIOS)
       ...ENVIOS.menu(),   // envio compartilhado (07/11/2026)
     ];
   }

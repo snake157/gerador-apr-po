@@ -3393,7 +3393,7 @@ function renderEditor() {
           ['Exportar Excel', () => conferirPO(() => exportarExcel()), 'Salva o PO em .xlsx', 'exp xls'],
           ['Exportar Word', () => conferirPO(() => exportarWord()), 'Salva o PO em .docx', 'exp doc'],
           null,
-          ['Atualizar biblioteca', () => ATUALIZAR_BIB.executar(), 'Ler a pasta Pictogramas e atualizar os pictogramas'],
+          // 07/11/2026: "Atualizar biblioteca" saiu do Menu (pictogramas novos entram por ENVIAR PICTOGRAMA / APROVAR ENVIOS)
           ...ENVIOS.menu(),   // envio compartilhado (07/11/2026)
           null,
           ['Configurar Gemini', configurarRevisor, 'Chave do Gemini usada pelos botões ORTOGRAFIA / GRAMÁTICA e MELHORAR TEXTO'],
@@ -4298,7 +4298,7 @@ window.addEventListener('afterprint', ajustarZoom);
 (async function iniciar() {
   // espera os outros arquivos (apr.js, importadores...) carregarem: sem isso a aba PO às vezes nascia sem os botões da APR (05/11/2026)
   if (document.readyState === 'loading') await new Promise(ok => document.addEventListener('DOMContentLoaded', ok, {once: true}));
-  if (!BIB.perigos.length) alert('Não encontrei a biblioteca de pictogramas (biblioteca.js). Use Menu > Atualizar biblioteca e escolha a pasta Pictogramas.');
+  if (!BIB.perigos.length) alert('Não encontrei a biblioteca de pictogramas (Pictogramas/biblioteca.js). Recarregue a página; se continuar, baixe o gerador de novo.');
   if (!window.DOC_INICIAL) {
     // abre sempre um PO novo e em branco; o da última vez só volta se ficou com alterações não salvas e você quiser
     const r = await rascunho.ler();
