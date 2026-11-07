@@ -72,8 +72,8 @@ window.PERIGOS_NOMES_ANTIGOS = {
 "Material Infecto-contagioso": "Respirar ar contaminado",
 "Material Infecto-contagiosojpg": "Respirar ar contaminado",
 "material infectocontagioso": "Respirar ar contaminado",
-"material inflamavel": "Falta de Oxigênio e Atmosfera explosiva",
-"Material Inflamável": "Falta de Oxigênio e Atmosfera explosiva",
+"material inflamavel": "Incêndio e Explosão",
+"Material Inflamável": "Incêndio e Explosão",   // 07/11/2026: Material Inflamável vai direto para Incêndio e Explosão (pedido dele)
 "Material irritante a saúde": "Contato com produto químico (2)",
 "material irritante": "Contato com produto químico (2)",
 "Material Oxidante": "Contato com produto químico (3)",
