@@ -21,8 +21,8 @@ SUMÁRIO
   aba aberta.
 - O painel da esquerda é o editor; a prévia à direita mostra as páginas como vão sair no PDF. Clicar num bloco
   da prévia leva ao campo no editor.
-- A lingueta "<" na borda do painel da esquerda oculta o painel (a prévia ou a conferência ocupam a tela
-  toda); ">" mostra de novo. O gerador lembra a escolha.
+- O botão com o desenho de um painel, no canto de cima da prévia, oculta o painel da esquerda (a prévia ou a
+  conferência ocupam a tela toda); clicando de novo, ele volta. O gerador lembra a escolha.
 - Use o gerador em UMA aba do navegador só. Se ele já estiver aberto em outra aba, aparece um aviso: com duas
   abertas, o rascunho automático de uma apaga o da outra.
 - Avisos e perguntas aparecem numa janela do próprio gerador, com botões que dizem o que fazem (ex.: "EXCLUIR" /

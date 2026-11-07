@@ -31,11 +31,16 @@ body{background:var(--ui-bg);color:var(--ui-texto);font:14px/1.4 "Segoe UI",Aria
 
 /* ---------- editor ---------- */
 #editor{width:470px;min-width:470px;height:100vh;overflow-y:auto;overflow-anchor:none;background:var(--ui-bg);border-right:1px solid var(--ui-borda)}
-/* botão que oculta / mostra a coluna de edição (lingueta na borda da coluna) */
-#btColuna{position:fixed;top:50%;left:470px;transform:translateY(-50%);z-index:30;width:18px;height:48px;padding:0;border:1px solid var(--ui-borda);border-left:0;border-radius:0 6px 6px 0;background:#fff;color:var(--azul);font-weight:700;font-size:13px;cursor:pointer;box-shadow:1px 1px 4px rgba(0,0,0,.12)}
-#btColuna:hover{background:#eff6ff}
+/* botão que oculta / mostra a coluna de edição: ícone de painel no canto de cima da prévia (07/11/2026, opção F aprovada;
+   antes era a lingueta "<" ">" no meio da borda). Fica na faixa à esquerda das páginas, sem cobrir o documento */
+#btColuna{position:fixed;top:10px;left:480px;z-index:30;width:30px;height:30px;padding:0;border:1px solid var(--ui-borda);border-radius:6px;background:#fff;color:var(--azul);cursor:pointer;display:flex;align-items:center;justify-content:center;box-shadow:0 1px 4px rgba(0,0,0,.25)}
+#btColuna svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:1.8;pointer-events:none}
+#btColuna:hover{background:var(--azul);border-color:var(--azul);color:#fff}
+#btColuna:focus-visible{outline:2px solid #fff;outline-offset:2px}
+body.aba-apr #btColuna{color:#5D6532}
+body.aba-apr #btColuna:hover{background:#5D6532;border-color:#5D6532;color:#fff}
 body.sem-editor #editor{display:none}
-body.sem-editor #btColuna{left:0}
+body.sem-editor #btColuna{left:10px}
 .barra{position:sticky;top:0;z-index:5;background:var(--azul);color:#fff;padding:10px 12px;display:grid;grid-template-columns:auto 1fr auto;gap:8px;align-items:center}
 .barra h1{font-size:15px;margin:0;text-align:center}
 .barra button{background:#fff;color:var(--azul);border:0;border-radius:5px;padding:6px 12px;font-weight:600;cursor:pointer;white-space:nowrap}
@@ -132,7 +137,7 @@ textarea{resize:vertical}
 .linha-botoes{display:flex;gap:6px;flex-wrap:wrap;margin-top:6px}
 
 /* ---------- prévia ---------- */
-#previa{flex:1;height:100vh;overflow:auto;background:#525659;padding:16px}
+#previa{flex:1;height:100vh;overflow:auto;background:#525659;padding:16px 16px 16px 50px}   /* 50 px à esquerda: faixa do botão do painel */
 .pagina{width:297mm;height:209.8mm;padding:5mm;background:#fff;margin:0 auto 6mm;box-shadow:0 2px 10px rgba(0,0,0,.4);overflow:hidden;
   font-family:Arial,Helvetica,sans-serif;color:#000;-webkit-print-color-adjust:exact;print-color-adjust:exact;position:relative}
 .pagina *{box-sizing:border-box}
@@ -457,7 +462,7 @@ body.aba-apr #modal .btn.primario{background:#5D6532;border-color:#5D6532}
 /* 10: contorno de destaque (clique na prévia) aparece suave */
 @keyframes fxContorno{0%{outline-color:transparent;outline-offset:6px}30%{outline-color:var(--ui-acento);outline-offset:2px}100%{outline-color:var(--ui-acento)}}
 .etapa.destaque,#editor .destaque{animation:fxContorno .5s ease-out}
-/* 11: lingueta < >: a coluna recolhe deslizando (o conteúdo mantém a largura enquanto fecha) */
+/* 11: botão do painel: a coluna recolhe deslizando (o conteúdo mantém a largura enquanto fecha) */
 body.pronto #editor{transition:width .25s ease,min-width .25s ease,visibility 0s}
 body.pronto #btColuna{transition:left .25s ease,background-color .15s}
 body.sem-editor #editor{display:block;width:0;min-width:0;overflow:hidden;border-right:0;visibility:hidden}
@@ -576,7 +581,7 @@ body.col-anim #previa{overflow-x:hidden}   /* a prévia já tem o tamanho final:
   <aside id="editor"></aside>
   <main id="previa"><div id="paginas"></div></main>
 </div>
-<button id="btColuna" title="Ocultar a coluna de edição">&lt;</button>
+<button id="btColuna" title="Ocultar a coluna de edição" aria-label="Ocultar a coluna de edição"><svg viewBox="0 0 16 16" aria-hidden="true"><rect x="1.5" y="2.5" width="13" height="11" rx="2"/><line x1="6" y1="2.5" x2="6" y2="13.5"/></svg></button>
 <div id="medidor"></div>
 <div id="modal" hidden></div>
 <div id="aviso"></div>
@@ -3971,7 +3976,7 @@ function ajustarZoom(aMais) {
   // aMais: px que a prévia vai ganhar (ou perder) quando a coluna de edição terminar de andar
   const p = $('#previa'), c = $('#paginas');
   const largura = 297 * MMPX + 12;
-  c.style.zoom = Math.min(1.4, (p.clientWidth + (typeof aMais === 'number' ? aMais : 0) - 32) / largura);
+  c.style.zoom = Math.min(1.4, (p.clientWidth + (typeof aMais === 'number' ? aMais : 0) - 66) / largura);
 }
 function atualizarInfos() {
   doc.etapas.forEach(e => {
@@ -4087,7 +4092,7 @@ $('#paginas').addEventListener('click', ev => {
   }
 });
 window.addEventListener('resize', ajustarZoom);
-// lingueta "<" / ">": oculta e mostra a coluna de edição da esquerda (a escolha fica guardada)
+// botão do painel (canto de cima da prévia): oculta e mostra a coluna de edição da esquerda (a escolha fica guardada)
 function colunaEditor(mostrar) {
   // recolhe e volta deslizando: o conteúdo fica com a largura de sempre enquanto a coluna anda (26/10/2026)
   const ed = $('#editor');
@@ -4099,7 +4104,7 @@ function colunaEditor(mostrar) {
   const p = $('#previa'), mudanca = document.body.classList.contains('sem-editor') === !mostrar ? 0 : (mostrar ? -470 : ed.offsetWidth || 470);   // 470 px = largura da coluna
   const fracao = p.scrollHeight > p.clientHeight ? p.scrollTop / (p.scrollHeight - p.clientHeight) : 0;
   document.body.classList.toggle('sem-editor', !mostrar);
-  const b = $('#btColuna'); b.textContent = mostrar ? '<' : '>'; b.title = mostrar ? 'Ocultar a coluna de edição' : 'Mostrar a coluna de edição';
+  const b = $('#btColuna'); b.title = mostrar ? 'Ocultar a coluna de edição' : 'Mostrar a coluna de edição'; b.setAttribute('aria-label', b.title);
   try { localStorage.setItem('semEditor', mostrar ? '' : '1'); } catch (e) {}
   const barra = $('#editor .barra'); if (mostrar && barra) $('#editor').style.setProperty('--alt-barra', barra.offsetHeight + 'px');   // medida com o editor escondido dá 0
   ajustarZoom(document.body.classList.contains('pronto') ? mudanca : 0);
