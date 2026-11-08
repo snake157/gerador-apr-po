@@ -1,5 +1,6 @@
 // Menu > ADMINISTRADOR (07/11/2026, tela aprovada): com a senha de aprovador, inclui, edita e exclui
 // os perigos da tabela (Perigo, Risco, PD) e os pictogramas de perigo e de EPI.
+// 08/11/2026: a aprovação dos envios (antes Menu > APROVAR ENVIOS) virou a primeira aba, APROVAR ENVIOS.
 // As mudanças ficam marcadas e só são gravadas em SALVAR ALTERAÇÕES, todas de uma vez no GitHub,
 // pelo carteiro do Cloudflare (functions/api/[acao].js, rota "administrar").
 'use strict';
@@ -9,7 +10,7 @@ const ADMIN = (() => {
   const estilo = document.createElement('style');
   estilo.textContent = `
 .janela.envio.admin{width:min(1000px,96vw);height:min(90vh,860px);max-height:none}
-.admin .adm-abas{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));border:1px solid var(--env-cor);border-radius:5px;overflow:hidden;margin:12px 12px 0;flex:none}
+.admin .adm-abas{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));border:1px solid var(--env-cor);border-radius:5px;overflow:hidden;margin:12px 12px 0;flex:none}
 .admin .adm-abas button{border:0;background:#fff;color:var(--env-cor);font:700 12px Arial,Helvetica,sans-serif;text-transform:uppercase;height:32px;cursor:pointer;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;padding:0 6px}
 .admin .adm-abas button.sel{background:var(--env-cor);color:#fff}
 .admin .adm-barra{display:grid;grid-template-columns:minmax(0,1fr) 140px;gap:8px;padding:10px 12px;flex:none}
@@ -35,13 +36,30 @@ const ADMIN = (() => {
 .admin .adm-editor img,.admin .adm-editor .vazio{width:96px;height:96px;object-fit:contain;background:#fff;border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:11px;color:var(--ui-suave);text-align:center}
 .admin .adm-editor .campos{display:flex;flex-direction:column;gap:6px;min-width:0}
 .admin .adm-status{font-size:12px;color:var(--ui-suave);text-align:center;padding:6px 12px 0;flex:none}
+.admin .adm-envios{padding:0;gap:0}
+/* 08/11/2026: imagem | cabeçalho + uma linha de campos | APROVAR e RECUSAR (da altura do item: centralizados e
+   com a base do RECUSAR na base dos campos). As colunas dos campos são iguais em todos os itens. */
+.admin .adm-envios .env-item{grid-template-columns:76px minmax(0,1fr) 150px;gap:16px;align-items:stretch;padding:14px 4px}
+.admin .adm-envios .env-item>img,.admin .adm-envios .env-item>.env-icone{width:76px;height:76px;align-self:center}
+.admin .adm-envios .env-dados{gap:6px}
+.admin .adm-envios .env-cab{height:20px;line-height:20px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:13px;text-align:left}
+.admin .adm-envios .env-cab .env-quem{font-size:12px}
+.admin .adm-envios .env-campos{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.4fr) 230px;gap:12px;align-items:end}
+.admin .adm-envios .env-campos textarea{height:32px;min-height:32px;resize:none}
+.admin .adm-envios .env-campo{text-align:left}
+.admin .adm-envios .env-campo>.env-rot{display:flex;flex-direction:row;align-items:center;gap:6px;white-space:nowrap;height:18px;line-height:18px;text-align:left}
+.admin .adm-envios .env-estado{display:inline-flex}
+.admin .adm-envios .env-estado .env-selo{padding:0 8px;line-height:16px;height:16px;font-size:10px}
+.admin .adm-envios .env-atual{width:18px;height:18px;object-fit:contain}
+.admin .adm-envios .env-acoes{display:grid;grid-template-rows:1fr 1fr;gap:6px;align-self:stretch}
+.admin .adm-envios .env-acoes .btn{min-height:0;height:auto}
 .admin .adm-msg{text-align:center;color:var(--ui-suave);font-size:12.5px;padding:18px 0}
 `;
   document.head.append(estilo);
 
   const variacao = /\s\(\d+\)$/;
   let senha = '', aba = 'tabela', editando = null, tab = [], pics = {}, excluidos = 0, salvando = false;
-  let corpo, busca, status, fecharJanela;
+  let corpo, busca, barra, status, fecharJanela;
 
   function carregar() {
     tab = (window.TABELA_PERIGOS || []).map(r => ({perigo: String(r.perigo || '').trim(), risco: String(r.risco || '').trim(), pd: Number(r.pd) || 3, _orig: String(r.perigo || '').trim()}));
@@ -60,6 +78,16 @@ const ADMIN = (() => {
   // ---------- desenho ----------
   function desenhar() {
     const {selo, div} = A();
+    barra.style.display = aba === 'envios' ? 'none' : '';
+    if (aba === 'envios') {
+      const lista = div('env-corpo adm-envios');
+      corpo.replaceChildren(lista);
+      A().montarAprovacao(lista, senha, {
+        // aprovar grava na hora: com alterações não salvas nas outras abas, elas seriam gravadas por cima
+        antes: () => { if (!mudancas() && editando === null) return true; alert('Salve (SALVAR ALTERAÇÕES) ou desfaça as alterações das outras abas antes de aprovar.'); return false; },
+        depois: () => carregar()});
+      return;
+    }
     const q = A().N(busca.value);
     if (aba === 'tabela') {
       const cols = el('colgroup', {}, ...['36%', '40%', '9%', '15%'].map(w => el('col', {style: 'width:' + w})));
@@ -240,12 +268,12 @@ const ADMIN = (() => {
     }
   }
 
-  async function abrir() {
+  async function abrir(inicio) {
     senha = A().guardado('envio:senhaAdm') || await A().pedirSenha();
     if (!senha) return;
-    carregar(); aba = 'tabela';
+    carregar(); aba = inicio || (A().pendentes() ? 'envios' : 'tabela');
     const {div} = A();
-    const abas = div('adm-abas', ...[['tabela', 'Perigos e riscos'], ['perigos', 'Pictogramas de perigo'], ['epis1', 'Pictogramas de EPI']].map(([a, t]) =>
+    const abas = div('adm-abas', ...[['envios', 'Aprovar envios' + (A().pendentes() ? ` (${A().pendentes()})` : '')], ['tabela', 'Perigos e riscos'], ['perigos', 'Pictogramas de perigo'], ['epis1', 'Pictogramas de EPI']].map(([a, t]) =>
       el('button', {type: 'button', class: a === aba ? 'sel' : '', 'data-aba': a}, t)));
     abas.onclick = ev => {
       const b = ev.target.closest('button'); if (!b || b.dataset.aba === aba) return;
@@ -267,7 +295,7 @@ const ADMIN = (() => {
     };
     fecharJanela = A().janela('admin', 'Administrador',
       el('div', {style: 'display:flex;flex-direction:column;min-height:0;flex:1'}, abas,
-        div('adm-barra', busca, el('button', {class: 'btn primario', onclick: novo}, '+ Novo')), corpo, status),
+        barra = div('adm-barra', busca, el('button', {class: 'btn primario', onclick: novo}, '+ Novo')), corpo, status),
       () => [
         el('button', {class: 'btn primario', onclick: ev => salvar(ev.currentTarget)}, 'Salvar alterações'),
         el('button', {class: 'btn', onclick: async () => {

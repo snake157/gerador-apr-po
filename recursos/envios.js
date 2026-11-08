@@ -1,5 +1,6 @@
 // Envio compartilhado (07/11/2026): qualquer pessoa manda um pictograma ou um perigo novo pelo gerador online,
-// sem senha; o envio fica PENDENTE e só o aprovador (senha) aprova ou recusa em Menu > APROVAR ENVIOS.
+// sem senha (Menu > INCLUIR PERIGO / PICTOGRAMA); o envio fica PENDENTE e só o aprovador (senha) aprova ou recusa
+// em Menu > ADMINISTRADOR, aba APROVAR ENVIOS (08/11/2026: os dois itens de envio e os dois de aprovação viraram um só).
 // Quem grava no GitHub é o "carteiro" do Cloudflare (functions/api/[acao].js); depois de aprovado,
 // o site publica de novo em ~1 minuto e todos passam a ver.
 'use strict';
@@ -13,16 +14,22 @@ const ENVIOS = (() => {
   const guardar = (k, v) => { try { if (v) localStorage.setItem(k, v); else localStorage.removeItem(k); } catch (e) {} };
   const N = s => String(s || '').normalize('NFD').replace(/[̀-ͯ]/g, '').toUpperCase().replace(/[^A-Z0-9]+/g, ' ').trim();
   let pendentesTotal = null;
-  const rotuloAprovar = () => 'APROVAR ENVIOS' + (pendentesTotal ? ` (${pendentesTotal})` : '');
+  const total = () => pendentesTotal ? ` (${pendentesTotal})` : '';
+  const rotuloAdm = () => 'ADMINISTRADOR' + total();
   // o menu já desenhado mostra o número novo sem redesenhar a tela
   function mostrarTotal(n) {
     pendentesTotal = n;
-    for (const b of document.querySelectorAll('.lista-menu button')) if (b.textContent.startsWith('APROVAR ENVIOS')) b.textContent = rotuloAprovar();
+    for (const b of document.querySelectorAll('.lista-menu button')) if (b.textContent.startsWith('ADMINISTRADOR')) b.textContent = rotuloAdm();
+    for (const b of document.querySelectorAll('.adm-abas button[data-aba=envios]')) b.textContent = 'Aprovar envios' + total();
   }
 
   const estilo = document.createElement('style');
   estilo.textContent = `
+#editor .lista-menu{width:280px}
 #editor .lista-menu .menu-adm{display:flex;align-items:center;gap:6px}
+.envio .env-abas{display:grid;grid-template-columns:1fr 1fr;border:1px solid var(--env-cor);border-radius:5px;overflow:hidden;flex:none}
+.envio .env-abas button{border:0;background:#fff;color:var(--env-cor);font:700 12px Arial,Helvetica,sans-serif;text-transform:uppercase;height:32px;cursor:pointer}
+.envio .env-abas button.sel{background:var(--env-cor);color:#fff}
 #editor .lista-menu .menu-adm>button:first-child{flex:1;min-width:0}
 #editor .lista-menu button.menu-sair{flex:none;width:auto;height:28px;display:inline-flex;align-items:center;gap:5px;padding:0 10px;margin-right:4px;background:#e5484d;color:#fff;font-weight:700;border-radius:5px}
 #editor .lista-menu button.menu-sair:hover{background:#c9363b;color:#fff}
@@ -56,6 +63,9 @@ const ENVIOS = (() => {
 .envio .env-quem{font-size:11.5px;color:var(--ui-suave);overflow-wrap:anywhere}
 .envio .env-compara{display:flex;gap:6px;align-items:center;font-size:11px;color:var(--ui-suave);flex-wrap:wrap}
 .envio .env-compara img{width:34px;height:34px;object-fit:contain}
+.env-lupa{position:fixed;z-index:95;background:#fff;border:1px solid var(--ui-borda);border-radius:8px;box-shadow:0 8px 24px rgba(0,0,0,.25);padding:8px;display:flex;flex-direction:column;align-items:center;gap:6px;pointer-events:none}
+.env-lupa img{width:76px;height:76px;object-fit:contain}
+.env-lupa span{font:700 11px Arial,Helvetica,sans-serif;text-transform:uppercase;letter-spacing:.04em;color:#374151}
 .envio .env-msg{text-align:center;color:var(--ui-suave);font-size:12.5px;padding:18px 0}
 `;
   document.head.append(estilo);
@@ -65,6 +75,25 @@ const ENVIOS = (() => {
   const campo = (rotulo, controle, id) => { if (id) controle.id = id; return div('env-campo', el('label', {class: 'env-rot', for: id}, rotulo), controle); };
   const selo = (txt, verde) => el('span', {class: 'env-selo ' + (verde ? 'verde' : 'cinza')}, txt);
   const dataBR = iso => { const d = new Date(iso); return isNaN(d) ? '' : d.toLocaleDateString('pt-BR') + ' ' + d.toLocaleTimeString('pt-BR', {hour: '2-digit', minute: '2-digit'}); };
+
+  // miniatura pequena: com o mouse em cima abre uma visão maior ao lado (08/11/2026), perigo ou EPI
+  function lupa(img, legenda) {
+    let caixa = null;
+    const tirar = () => { if (caixa) { caixa.remove(); caixa = null; } };
+    img.style.cursor = 'zoom-in';
+    img.addEventListener('mouseenter', () => {
+      tirar();
+      const r = img.getBoundingClientRect(), lado = 76;
+      caixa = el('div', {class: 'env-lupa'}, el('img', {src: img.src, alt: ''}), legenda ? el('span', {}, legenda) : '');
+      const x = Math.min(window.innerWidth - lado - 32, Math.max(8, r.left + r.width / 2 - lado / 2 - 10));
+      const y = r.top - lado - 38 > 8 ? r.top - lado - 38 : r.bottom + 8;
+      caixa.style.left = x + 'px'; caixa.style.top = y + 'px';
+      document.body.append(caixa);
+    });
+    img.addEventListener('mouseleave', tirar);
+    img.addEventListener('click', tirar);
+    return img;
+  }
 
   // abre a janela no #modal do gerador; devolve a função que fecha
   function janela(classe, titulo, corpo, botoes) {
@@ -108,8 +137,9 @@ const ENVIOS = (() => {
   const listaBib = tipo => (typeof BIB !== 'undefined' && BIB[tipo === 'perigo' ? 'perigos' : 'epis1']) || [];
   const nomesTabela = () => (window.TABELA_PERIGOS || []).map(r => String(r.perigo || '').trim()).filter(Boolean);
 
-  // ---------- ENVIAR PICTOGRAMA ----------
-  function enviarPictograma() {
+  // ---------- INCLUIR PERIGO / PICTOGRAMA ----------
+  // cada aba devolve {corpo, enviar(botão), foco}; a janela troca a aba sem perder o que foi preenchido
+  function formPictograma() {
     let tipo = 'perigo', arq = null, img = null;
     const lista = el('datalist', {id: 'envNomes'});
     const nome = el('input', {type: 'text', list: 'envNomes', autocomplete: 'off', placeholder: 'Comece a digitar para buscar'});
@@ -141,40 +171,32 @@ const ENVIOS = (() => {
       try { if (img) URL.revokeObjectURL(img.url); img = await abrirImagem(f); arq = f; mostrar(); }
       catch (e) { alert('Não consegui abrir a imagem: ' + erroAmigavel(e)); }
     };
-    const fechar = janela('', 'Enviar pictograma',
-      div('env-corpo',
+    const corpo = div('env-corpo',
         div('env-campo', el('span', {class: 'env-rot'}, 'Tipo'), div('env-chave', ...bts)),
         div('env-campo', rotNome, nome, lista),
         div('env-campo', el('span', {class: 'env-rot'}, 'Imagem'), previa, el('button', {type: 'button', class: 'btn', onclick: () => escolher.click()}, 'Escolher imagem'), escolher),
         campo('Observação (opcional)', obs, 'envObs1'),
-        campo('Seu nome', autor, 'envAutor1')),
-      f => [
-        el('button', {class: 'btn primario', onclick: async ev => {
-          const n = nome.value.trim(), a = autor.value.trim();
-          if (!n) { alert('Escolha o nome do pictograma.'); return; }
-          if (tipo === 'perigo' && !nomesTabela().includes(n)) { alert(`"${n}" não está na tabela de perigos. Escolha um nome da lista (se o perigo for novo, envie primeiro em Menu > ENVIAR PERIGO).`); return; }
-          if (!arq) { alert('Escolha a imagem do pictograma.'); return; }
-          if (!a) { alert('Escreva o seu nome.'); autor.focus(); return; }
-          const b = ev.currentTarget; b.disabled = true; b.textContent = 'Enviando…';
-          try {
-            await chamar('enviar', {autor: a, tipo, nome: n, obs: obs.value, nomeArquivo: arq.name, arquivo: await lerBase64(arq), mini: miniatura(img.im)});
-            guardar('envio:autor', a); f(); avisar('Enviado, aguardando aprovação.', 'Enviar pictograma');
-          } catch (e) { b.disabled = false; b.textContent = 'Enviar'; alert('Não consegui enviar: ' + erroAmigavel(e)); }
-        }}, 'Enviar'),
-        el('button', {class: 'btn', onclick: f}, 'Cancelar')]);
+        campo('Seu nome', autor, 'envAutor1'));
+    const enviar = async () => {
+      const n = nome.value.trim(), a = autor.value.trim();
+      if (!n) { alert('Escolha o nome do pictograma.'); return false; }
+      if (tipo === 'perigo' && !nomesTabela().includes(n)) { alert(`"${n}" não está na tabela de perigos. Escolha um nome da lista (se o perigo for novo, inclua primeiro o perigo, na aba PERIGO).`); return false; }
+      if (!arq) { alert('Escolha a imagem do pictograma.'); return false; }
+      if (!a) { alert('Escreva o seu nome.'); autor.focus(); return false; }
+      await chamar('enviar', {autor: a, tipo, nome: n, obs: obs.value, nomeArquivo: arq.name, arquivo: await lerBase64(arq), mini: miniatura(img.im)});
+      guardar('envio:autor', a); return true;
+    };
     trocarTipo('perigo');
-    nome.focus();
-    return fechar;
+    return {corpo, enviar, foco: nome};
   }
 
-  // ---------- ENVIAR PERIGO ----------
   function parecidos(texto) {
     const q = N(texto).split(' ').filter(w => w.length > 2);
     if (!q.length) return [];
     return nomesTabela().map(p => { const w = N(p).split(' '); return [p, q.filter(x => w.some(y => y.startsWith(x) || x.startsWith(y))).length]; })
       .filter(([, n]) => n >= Math.max(1, Math.ceil(q.length / 2))).sort((a, b) => b[1] - a[1]).slice(0, 3).map(([p]) => p);
   }
-  function enviarPerigo() {
+  function formPerigo() {
     const perigo = el('input', {type: 'text', placeholder: 'Ex.: Superfície quente'});
     const risco = el('textarea', {placeholder: 'Ex.: Queimaduras por contato com partes quentes.'});
     const resumo = div('env-resumo');
@@ -188,23 +210,42 @@ const ENVIOS = (() => {
         ...(ja ? [el('span', {}, ja)] : par.length ? [el('span', {}, 'Parecidos na tabela:'), ...par.map(p => el('span', {}, '• ' + p))] : [el('span', {}, 'Nenhum perigo parecido na tabela.')]));
     };
     perigo.oninput = mostrar;
-    janela('', 'Enviar perigo',
-      div('env-corpo', campo('Perigo', perigo, 'envPerigo'), campo('Risco', risco, 'envRisco'), resumo,
-        campo('Observação (opcional)', obs, 'envObs2'), campo('Seu nome', autor, 'envAutor2')),
-      f => [
-        el('button', {class: 'btn primario', onclick: async ev => {
-          const p = perigo.value.trim(), r = risco.value.trim(), a = autor.value.trim();
-          if (!p || !r) { alert('Preencha o PERIGO e o RISCO.'); return; }
-          if (igual()) { alert(`"${igual()}" já está na tabela de perigos.`); return; }
-          if (!a) { alert('Escreva o seu nome.'); autor.focus(); return; }
-          const b = ev.currentTarget; b.disabled = true; b.textContent = 'Enviando…';
-          try {
-            await chamar('enviar', {autor: a, tipo: 'perigo-novo', perigo: p, risco: r, obs: obs.value});
-            guardar('envio:autor', a); f(); avisar('Enviado, aguardando aprovação.', 'Enviar perigo');
-          } catch (e) { b.disabled = false; b.textContent = 'Enviar'; alert('Não consegui enviar: ' + erroAmigavel(e)); }
-        }}, 'Enviar'),
-        el('button', {class: 'btn', onclick: f}, 'Cancelar')]);
-    mostrar(); perigo.focus();
+    const corpo = div('env-corpo', campo('Perigo', perigo, 'envPerigo'), campo('Risco', risco, 'envRisco'), resumo,
+      campo('Observação (opcional)', obs, 'envObs2'), campo('Seu nome', autor, 'envAutor2'));
+    const enviar = async () => {
+      const p = perigo.value.trim(), r = risco.value.trim(), a = autor.value.trim();
+      if (!p || !r) { alert('Preencha o PERIGO e o RISCO.'); return false; }
+      if (igual()) { alert(`"${igual()}" já está na tabela de perigos.`); return false; }
+      if (!a) { alert('Escreva o seu nome.'); autor.focus(); return false; }
+      await chamar('enviar', {autor: a, tipo: 'perigo-novo', perigo: p, risco: r, obs: obs.value});
+      guardar('envio:autor', a); return true;
+    };
+    mostrar();
+    return {corpo, enviar, foco: perigo};
+  }
+  // Menu > INCLUIR PERIGO / PICTOGRAMA (08/11/2026): uma janela com as abas PERIGO e PICTOGRAMA
+  function incluir(aba = 'perigo') {
+    const forms = {perigo: formPerigo(), pictograma: formPictograma()};
+    const abas = div('env-abas', ...[['perigo', 'Perigo'], ['pictograma', 'Pictograma']].map(([a, t]) => el('button', {type: 'button', 'data-aba': a}, t)));
+    const lugar = div('env-lugar');
+    lugar.style.cssText = 'display:flex;flex-direction:column;min-height:0;overflow:auto';
+    const mostrarAba = a => {
+      aba = a;
+      abas.querySelectorAll('button').forEach(b => b.classList.toggle('sel', b.dataset.aba === a));
+      lugar.replaceChildren(forms[a].corpo); forms[a].foco.focus();
+    };
+    abas.onclick = ev => { const a = ev.target.closest('button')?.dataset.aba; if (a && a !== aba) mostrarAba(a); };
+    const topo = div('', abas); topo.style.cssText = 'padding:12px 12px 0';
+    janela('', 'Incluir perigo / pictograma', el('div', {style: 'display:flex;flex-direction:column;min-height:0;flex:1'}, topo, lugar), f => [
+      el('button', {class: 'btn primario', onclick: async ev => {
+        const b = ev.currentTarget; b.disabled = true; b.textContent = 'Enviando…';
+        try {
+          if (await forms[aba].enviar()) { f(); avisar('Enviado, aguardando aprovação.', 'Incluir ' + (aba === 'perigo' ? 'perigo' : 'pictograma')); return; }
+        } catch (e) { alert('Não consegui enviar: ' + erroAmigavel(e)); }
+        b.disabled = false; b.textContent = 'Enviar';
+      }}, 'Enviar'),
+      el('button', {class: 'btn', onclick: f}, 'Cancelar')]);
+    mostrarAba(aba);
   }
 
   // ---------- APROVAR ENVIOS ----------
@@ -235,25 +276,23 @@ const ENVIOS = (() => {
     }
     try { renderEditor(); renderPrevia(); } catch (e) { console.warn(e); }
   }
-  async function aprovarEnvios() {
-    let senha = guardado('envio:senhaAdm') || await pedirSenha();
-    if (!senha) return;
-    const corpo = div('env-corpo', div('env-msg', 'Buscando envios…'));
-    janela('aprovar', 'Aprovar envios', corpo, f => [el('button', {class: 'btn', onclick: f}, 'Fechar')]);
+  // aba APROVAR ENVIOS do ADMINISTRADOR (08/11/2026): enche o "corpo" com os envios pendentes.
+  // antes(): false impede aprovar (o ADMINISTRADOR tem alterações não salvas); depois(): o ADMINISTRADOR relê as listas
+  async function montarAprovacao(corpo, senha, {antes = () => true, depois = () => {}} = {}) {
+    corpo.replaceChildren(div('env-msg', 'Buscando envios…'));
     let envios;
     try { envios = (await chamar('pendentes', {senha})).envios; }
-    catch (e) {
-      if (e.status === 401) { guardar('envio:senhaAdm', ''); $('#modal').hidden = true; aprovarEnvios(); return; }
-      corpo.replaceChildren(div('env-msg', 'Não consegui buscar os envios: ' + erroAmigavel(e))); return;
-    }
+    catch (e) { corpo.replaceChildren(div('env-msg', 'Não consegui buscar os envios: ' + erroAmigavel(e))); if (e.status === 401) guardar('envio:senhaAdm', ''); return; }
     const vazio = () => { if (!corpo.querySelector('.env-item')) corpo.replaceChildren(div('env-msg', 'Nenhum envio aguardando aprovação.')); };
     const atualizarTotal = () => mostrarTotal(corpo.querySelectorAll('.env-item').length);
     corpo.replaceChildren(...envios.map(e => {
       const novo = e.tipo === 'perigo-novo';
       // pictograma (aprovado 07/11/2026): o aprovador pode trocar TIPO e NOME e escolher SUBSTITUIR ou NOVO
-      const pic = novo ? null : {tipo: e.tipo, modo: 'substituir', area: div('env-dados'),
+      // 08/11/2026: cada item tem uma linha de campos só (cabeçalho numa linha), para APROVAR / RECUSAR ficarem
+      // centralizados no item e alinhados com os campos
+      const pic = novo ? null : {tipo: e.tipo, modo: 'substituir', area: div('env-campo env-modo'),
         nome: el('input', {type: 'text', value: e.nome, list: 'envLista' + e.id, autocomplete: 'off', 'aria-label': 'Nome'}),
-        lista: el('datalist', {id: 'envLista' + e.id})};
+        lista: el('datalist', {id: 'envLista' + e.id}), estado: el('span', {class: 'env-estado'})};
       if (pic) {
         const chaveTipo = div('env-chave', ...['perigo', 'epi'].map(t => el('button', {type: 'button', 'data-t': t}, t === 'perigo' ? 'Perigo' : 'EPI')));
         const chaveModo = div('env-chave', ...['substituir', 'novo'].map(t => el('button', {type: 'button', 'data-m': t}, t === 'novo' ? 'Novo' : 'Substituir')));
@@ -261,17 +300,17 @@ const ENVIOS = (() => {
           chaveTipo.querySelectorAll('button').forEach(b => b.classList.toggle('sel', b.dataset.t === pic.tipo));
           chaveModo.querySelectorAll('button').forEach(b => b.classList.toggle('sel', b.dataset.m === pic.modo));
           const n = pic.nome.value.trim(), atual = listaBib(pic.tipo).find(p => p.nome === n);
-          pic.area.replaceChildren(
-            atual ? div('env-compara', 'Atual', el('img', {src: atual.img, alt: ''}), '→ novo', el('img', {src: e.mini, alt: ''})) : '',
-            atual ? div('env-campo', el('span', {class: 'env-rot'}, 'Já existe com este nome'), chaveModo) : el('span', {}, selo('Novo: não existe com este nome', true)),
-            atual ? el('span', {class: 'env-quem'}, `SUBSTITUIR: troca o atual. NOVO: entra ao lado do atual como "${n} (2)", e no gerador dá para escolher qual usar.`) : '');
+          // 08/11/2026: o selo NOVO fica na linha do rótulo NOME, para não aumentar a altura do item
+          pic.estado.replaceChildren(atual ? '' : selo('Novo', true));
+          pic.area.title = atual ? `SUBSTITUIR: troca o atual. NOVO: entra ao lado do atual como "${n} (2)", e no gerador dá para escolher qual usar.` : '';
+          pic.area.replaceChildren(...(atual ? [el('span', {class: 'env-rot'}, 'Já existe', lupa(el('img', {class: 'env-atual', src: atual.img, alt: 'atual'}), 'Atual')), chaveModo] : []));
         };
         const encherLista = () => pic.lista.replaceChildren(...(pic.tipo === 'perigo' ? nomesTabela() : [...new Set(listaBib('epi').map(p => p.nome))]).map(n => el('option', {value: n})));
         chaveTipo.onclick = ev => { const t = ev.target.dataset.t; if (t && t !== pic.tipo) { pic.tipo = t; encherLista(); mostrar(); } };
         chaveModo.onclick = ev => { const m = ev.target.dataset.m; if (m) { pic.modo = m; mostrar(); } };
         pic.nome.oninput = mostrar;
         pic.campos = [div('env-campo', el('span', {class: 'env-rot'}, 'Tipo'), chaveTipo),
-          div('env-campo', el('span', {class: 'env-rot'}, 'Nome (você pode mudar)'), pic.nome, pic.lista), pic.area];
+          div('env-campo', el('span', {class: 'env-rot'}, 'Nome (você pode mudar) ', pic.estado), pic.nome, pic.lista), pic.area];
         encherLista(); mostrar();
       }
       const campos = novo ? {
@@ -280,17 +319,9 @@ const ENVIOS = (() => {
         pd: el('select', {'aria-label': 'PD'}, el('option', {value: ''}, 'Escolha o PD'), ...Object.entries(PD).map(([v, t]) => el('option', {value: v}, t))),
       } : null;
       if (campos) campos.risco.value = e.risco;
-      const item = div('env-item',
-        novo ? div('env-icone', 'Perigo') : el('img', {src: e.mini, alt: ''}),
-        div('env-dados',
-          el('span', {class: 'env-nome', title: e.nome}, novo ? 'Perigo novo' : e.nome),
-          el('span', {class: 'env-quem'}, [novo ? '' : e.tipo === 'perigo' ? 'Perigo' : 'EPI', e.autor, dataBR(e.data)].filter(Boolean).join(' · ')),
-          e.obs ? el('span', {class: 'env-quem'}, 'Obs.: ' + e.obs) : '',
-          ...(novo ? [div('env-campo', el('span', {class: 'env-rot'}, 'Perigo'), campos.perigo), div('env-campo', el('span', {class: 'env-rot'}, 'Risco'), campos.risco),
-                      div('env-campo', el('span', {class: 'env-rot'}, 'PD (você define)'), campos.pd)]
-            : pic.campos),
-          div('env-linha',
+      const acoes = div('env-acoes',
             el('button', {class: 'btn primario', onclick: async ev => {
+              if (!antes()) return;
               const d = {senha, id: e.id};
               if (novo) {
                 Object.assign(d, {perigo: campos.perigo.value.trim(), risco: campos.risco.value.trim(), pd: Number(campos.pd.value)});
@@ -304,7 +335,7 @@ const ENVIOS = (() => {
               const b = ev.currentTarget; b.disabled = true; b.textContent = 'Aprovando…';
               try {
                 const r = await chamar('aprovar', d);
-                item.remove(); atualizarTotal(); vazio(); aplicarAqui(r);
+                item.remove(); atualizarTotal(); vazio(); aplicarAqui(r); depois();
                 aviso(`Aprovado: ${novo ? d.perigo : r.nome}. Em cerca de 1 minuto todos veem no site.`);
               } catch (x) { b.disabled = false; b.textContent = 'Aprovar'; alert('Não consegui aprovar: ' + erroAmigavel(x)); if (x.status === 404) { item.remove(); vazio(); } }
             }}, 'Aprovar'),
@@ -314,7 +345,16 @@ const ENVIOS = (() => {
               b.disabled = true;
               try { await chamar('recusar', {senha, id: e.id}); item.remove(); atualizarTotal(); vazio(); }
               catch (x) { b.disabled = false; alert('Não consegui recusar: ' + erroAmigavel(x)); if (x.status === 404) { item.remove(); vazio(); } }
-            }}, 'Recusar'))));
+            }}, 'Recusar'));
+      const titulo = novo ? 'Perigo novo' : e.nome;
+      const meta = [novo ? '' : e.tipo === 'perigo' ? 'Perigo' : 'EPI', e.autor, dataBR(e.data), e.obs ? 'Obs.: ' + e.obs : ''].filter(Boolean).join(' · ');
+      const item = div('env-item',
+        novo ? div('env-icone', 'Perigo') : el('img', {src: e.mini, alt: ''}),
+        div('env-dados',
+          el('div', {class: 'env-cab', title: titulo + ' · ' + meta}, el('b', {}, titulo), el('span', {class: 'env-quem'}, ' · ' + meta)),
+          div('env-campos ' + (novo ? 'perigo' : 'picto'), ...(novo ? [div('env-campo', el('span', {class: 'env-rot'}, 'Perigo'), campos.perigo), div('env-campo', el('span', {class: 'env-rot'}, 'Risco'), campos.risco),
+                      div('env-campo', el('span', {class: 'env-rot'}, 'PD (você define)'), campos.pd)]
+            : pic.campos))), acoes);
       return item;
     }));
     atualizarTotal(); vazio();
@@ -329,16 +369,14 @@ const ENVIOS = (() => {
   if (location.protocol.startsWith('http')) setTimeout(contar, 3000);
 
   const menu = () => [
-    ['ENVIAR PICTOGRAMA', enviarPictograma, 'Mandar um pictograma de perigo ou de EPI para todos (fica aguardando aprovação)'],
-    ['ENVIAR PERIGO', enviarPerigo, 'Mandar um perigo novo para a tabela de perigos (fica aguardando aprovação)'],
-    [rotuloAprovar(), aprovarEnvios, 'Aprovar ou recusar os envios (só com a senha de aprovador)'],
+    ['INCLUIR PERIGO / PICTOGRAMA', () => incluir(), 'Mandar um perigo novo para a tabela ou um pictograma de perigo ou de EPI (fica aguardando aprovação)'],
     // 07/11/2026: a senha fica memorizada neste computador; depois de entrar, o SAIR (vermelho) fica na mesma linha
-    // do ADMINISTRADOR e esquece a senha
-    guardado('envio:senhaAdm') ? linhaAdministrador() : ['ADMINISTRADOR', () => ADMIN.abrir(), TXT_ADM],
+    // do ADMINISTRADOR e esquece a senha. 08/11/2026: APROVAR ENVIOS virou uma aba do ADMINISTRADOR
+    guardado('envio:senhaAdm') ? linhaAdministrador() : [rotuloAdm(), () => ADMIN.abrir(), TXT_ADM],
   ];
-  const TXT_ADM = 'Incluir, editar e excluir perigos da tabela e pictogramas de perigo e de EPI (só com a senha de aprovador)';
+  const TXT_ADM = 'Aprovar os envios e incluir, editar e excluir perigos da tabela e pictogramas de perigo e de EPI (só com a senha de aprovador)';
   const linhaAdministrador = () => el('div', {class: 'menu-adm'},
-    el('button', {type: 'button', title: TXT_ADM, onclick: () => { fecharMenu(); ADMIN.abrir(); }}, 'ADMINISTRADOR'),
+    el('button', {type: 'button', title: TXT_ADM, onclick: () => { fecharMenu(); ADMIN.abrir(); }}, rotuloAdm()),
     botaoSair());
   function botaoSair() {
     const b = el('button', {type: 'button', class: 'menu-sair', title: 'Sair do administrador: esquece a senha de aprovador neste computador', onclick: () => { fecharMenu(); sair(); }});
@@ -346,7 +384,7 @@ const ENVIOS = (() => {
     return b;
   }
   async function sair() {
-    if (!(await perguntar('Sair do administrador neste computador? Para aprovar envios ou usar o ADMINISTRADOR de novo, a senha será pedida.', {sim: 'Sair', nao: 'Voltar', titulo: 'Sair do administrador'}))) return;
+    if (!(await perguntar('Sair do administrador neste computador? Para usar o ADMINISTRADOR de novo, a senha será pedida.', {sim: 'Sair', nao: 'Voltar', titulo: 'Sair do administrador'}))) return;
     guardar('envio:senhaAdm', ''); pendentesTotal = 0;
     redesenhar();
     aviso('Você saiu do administrador.');
@@ -354,6 +392,6 @@ const ENVIOS = (() => {
   // o Menu é montado de novo para mostrar ou esconder o SAIR
   const redesenhar = () => { try { renderEditor(); } catch (e) {} };
   // usado pelo ADMINISTRADOR (recursos/administrador.js)
-  const ajuda = {chamar, janela, pedirSenha, guardado, guardar, abrirImagem, miniatura, lerBase64, selo, div, PD, N};
-  return {menu, enviarPictograma, enviarPerigo, aprovarEnvios, API, ajuda};
+  const ajuda = {chamar, janela, pedirSenha, guardado, guardar, abrirImagem, miniatura, lerBase64, selo, div, PD, N, montarAprovacao, pendentes: () => pendentesTotal || 0};
+  return {menu, incluir, API, ajuda};
 })();
