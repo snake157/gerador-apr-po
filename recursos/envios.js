@@ -210,7 +210,7 @@ const ENVIOS = (() => {
       const tentar = async b => {
         if (!s.value) return;
         b.disabled = true;
-        try { await chamar('entrar', {senha: s.value}); guardar('envio:senhaAdm', s.value); fechar(); ok(s.value); }
+        try { await chamar('entrar', {senha: s.value}); guardar('envio:senhaAdm', s.value); fechar(); redesenhar(); ok(s.value); }
         catch (e) { b.disabled = false; alert(e.status === 401 ? 'Senha incorreta.' : 'Não consegui entrar: ' + erroAmigavel(e)); }
       };
       const fechar = janela('', 'Senha de aprovador', div('env-corpo', s), f => [
@@ -329,7 +329,17 @@ const ENVIOS = (() => {
     ['ENVIAR PERIGO', enviarPerigo, 'Mandar um perigo novo para a tabela de perigos (fica aguardando aprovação)'],
     [rotuloAprovar(), aprovarEnvios, 'Aprovar ou recusar os envios (só com a senha de aprovador)'],
     ['ADMINISTRADOR', () => ADMIN.abrir(), 'Incluir, editar e excluir perigos da tabela e pictogramas de perigo e de EPI (só com a senha de aprovador)'],
+    // 07/11/2026: a senha fica memorizada neste computador; SAIR esquece a senha (só aparece depois de entrar)
+    ...(guardado('envio:senhaAdm') ? [['SAIR DO ADMINISTRADOR', sair, 'Esquecer a senha de aprovador neste computador (ela será pedida de novo)']] : []),
   ];
+  async function sair() {
+    if (!(await perguntar('Sair do administrador neste computador? Para aprovar envios ou usar o ADMINISTRADOR de novo, a senha será pedida.', {sim: 'Sair', nao: 'Voltar', titulo: 'Sair do administrador'}))) return;
+    guardar('envio:senhaAdm', ''); pendentesTotal = 0;
+    redesenhar();
+    aviso('Você saiu do administrador.');
+  }
+  // o Menu é montado de novo para mostrar ou esconder o SAIR
+  const redesenhar = () => { try { renderEditor(); } catch (e) {} };
   // usado pelo ADMINISTRADOR (recursos/administrador.js)
   const ajuda = {chamar, janela, pedirSenha, guardado, guardar, abrirImagem, miniatura, lerBase64, selo, div, PD, N};
   return {menu, enviarPictograma, enviarPerigo, aprovarEnvios, API, ajuda};
