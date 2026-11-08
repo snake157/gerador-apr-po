@@ -22,6 +22,10 @@ const ENVIOS = (() => {
 
   const estilo = document.createElement('style');
   estilo.textContent = `
+#editor .lista-menu .menu-adm{display:flex;align-items:center;gap:6px}
+#editor .lista-menu .menu-adm>button:first-child{flex:1;min-width:0}
+#editor .lista-menu button.menu-sair{flex:none;width:auto;height:28px;display:inline-flex;align-items:center;gap:5px;padding:0 10px;margin-right:4px;background:#e5484d;color:#fff;font-weight:700;border-radius:5px}
+#editor .lista-menu button.menu-sair:hover{background:#c9363b;color:#fff}
 .janela.envio{width:min(460px,94vw);height:auto;max-height:min(90vh,820px)}
 .janela.envio.aprovar{width:min(560px,94vw)}
 .janela.envio header{justify-content:center}
@@ -328,10 +332,19 @@ const ENVIOS = (() => {
     ['ENVIAR PICTOGRAMA', enviarPictograma, 'Mandar um pictograma de perigo ou de EPI para todos (fica aguardando aprovação)'],
     ['ENVIAR PERIGO', enviarPerigo, 'Mandar um perigo novo para a tabela de perigos (fica aguardando aprovação)'],
     [rotuloAprovar(), aprovarEnvios, 'Aprovar ou recusar os envios (só com a senha de aprovador)'],
-    ['ADMINISTRADOR', () => ADMIN.abrir(), 'Incluir, editar e excluir perigos da tabela e pictogramas de perigo e de EPI (só com a senha de aprovador)'],
-    // 07/11/2026: a senha fica memorizada neste computador; SAIR esquece a senha (só aparece depois de entrar)
-    ...(guardado('envio:senhaAdm') ? [['SAIR DO ADMINISTRADOR', sair, 'Esquecer a senha de aprovador neste computador (ela será pedida de novo)']] : []),
+    // 07/11/2026: a senha fica memorizada neste computador; depois de entrar, o SAIR (vermelho) fica na mesma linha
+    // do ADMINISTRADOR e esquece a senha
+    guardado('envio:senhaAdm') ? linhaAdministrador() : ['ADMINISTRADOR', () => ADMIN.abrir(), TXT_ADM],
   ];
+  const TXT_ADM = 'Incluir, editar e excluir perigos da tabela e pictogramas de perigo e de EPI (só com a senha de aprovador)';
+  const linhaAdministrador = () => el('div', {class: 'menu-adm'},
+    el('button', {type: 'button', title: TXT_ADM, onclick: () => { fecharMenu(); ADMIN.abrir(); }}, 'ADMINISTRADOR'),
+    botaoSair());
+  function botaoSair() {
+    const b = el('button', {type: 'button', class: 'menu-sair', title: 'Sair do administrador: esquece a senha de aprovador neste computador', onclick: () => { fecharMenu(); sair(); }});
+    b.innerHTML = '<svg viewBox="0 0 24 24" width="15" height="15" aria-hidden="true"><path fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" d="M10 4H5a1 1 0 0 0-1 1v14a1 1 0 0 0 1 1h5M15 8l4 4-4 4M19 12H9"/></svg><span>Sair</span>';
+    return b;
+  }
   async function sair() {
     if (!(await perguntar('Sair do administrador neste computador? Para aprovar envios ou usar o ADMINISTRADOR de novo, a senha será pedida.', {sim: 'Sair', nao: 'Voltar', titulo: 'Sair do administrador'}))) return;
     guardar('envio:senhaAdm', ''); pendentesTotal = 0;
