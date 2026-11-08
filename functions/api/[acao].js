@@ -318,7 +318,7 @@ async function aprovar(env, d) {
     if (![1, 2, 3, 4, 5].includes(linha.pd)) return erro('escolha o PD (1 a 5)');
   }
   // pictograma: o aprovador pode trocar o tipo e o nome, e escolher SUBSTITUIR ou NOVO (entra como "Nome (2)")
-  let tipo = e.tipo, nome = e.nome, modo = d.modo === 'novo' ? 'novo' : 'substituir', semNome = false;
+  let tipo = e.tipo, nome = e.nome, modo = d.modo === 'novo' ? 'novo' : 'substituir';
   if (e.tipo !== 'perigo-novo') {
     if (d.tipo === 'perigo' || d.tipo === 'epi') tipo = d.tipo;
     if (d.nome !== undefined) nome = limpar(d.nome, 150);
@@ -336,10 +336,7 @@ async function aprovar(env, d) {
         const nova = [...tab, linha];
         return arquivosDaTabela(env, base, nova);
       }
-      if (tipo === 'perigo') {
-        const tab = perigosDaTabela(await lerArquivo(env, TABELA_JS, base));
-        if (!tab.some(r => r.perigo === nome)) { semNome = true; return []; }
-      }
+      // 08/11/2026: pictograma de perigo pode ter nome fora da tabela de perigos
       const bib = await lerArquivo(env, BIB, base);
       const existe = n => bib.includes(`{"nome":${JSON.stringify(n)},"img":"`);
       let final = nome;
@@ -350,7 +347,6 @@ async function aprovar(env, d) {
       return [{ caminho: BIB, texto: r.texto }, { caminho: `${PASTA[tipo]}/${final}${ext}`, base64: e.arquivo }];
     });
   if (ja) return erro(`o perigo "${linha.perigo}" já está na tabela`, 409);
-  if (semNome) return erro(`"${nome}" não está na tabela de perigos; escolha um nome da lista`, 400);
   await apagarPendente(env, e.id, p.meta.sha, `Aprovado: ${nome}`);
   return resposta({ ok: true, commit: sha, substituiu, linha, tipo: e.tipo === 'perigo-novo' ? e.tipo : tipo, nome, mini: e.mini });
 }

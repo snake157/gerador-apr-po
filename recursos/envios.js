@@ -157,7 +157,7 @@ const ENVIOS = (() => {
     };
     const trocarTipo = t => {
       tipo = t; bts[0].classList.toggle('sel', t === 'perigo'); bts[1].classList.toggle('sel', t === 'epi');
-      rotNome.textContent = t === 'perigo' ? 'Nome (da tabela de perigos)' : 'Nome do EPI';
+      rotNome.textContent = t === 'perigo' ? 'Nome do perigo' : 'Nome do EPI';
       const nomes = t === 'perigo' ? nomesTabela() : [...new Set(listaBib('epi').map(p => p.nome))];
       lista.replaceChildren(...nomes.map(n => el('option', {value: n})));
       nome.value = ''; mostrar();
@@ -180,7 +180,7 @@ const ENVIOS = (() => {
     const enviar = async () => {
       const n = nome.value.trim(), a = autor.value.trim();
       if (!n) { alert('Escolha o nome do pictograma.'); return false; }
-      if (tipo === 'perigo' && !nomesTabela().includes(n)) { alert(`"${n}" não está na tabela de perigos. Escolha um nome da lista (se o perigo for novo, inclua primeiro o perigo, na aba PERIGO).`); return false; }
+      // 08/11/2026: pictograma de perigo pode ter nome fora da tabela de perigos (a lista só sugere)
       if (!arq) { alert('Escolha a imagem do pictograma.'); return false; }
       if (!a) { alert('Escreva o seu nome.'); autor.focus(); return false; }
       await chamar('enviar', {autor: a, tipo, nome: n, obs: obs.value, nomeArquivo: arq.name, arquivo: await lerBase64(arq), mini: miniatura(img.im)});
@@ -330,7 +330,6 @@ const ENVIOS = (() => {
               } else {
                 Object.assign(d, {tipo: pic.tipo, nome: pic.nome.value.trim(), modo: pic.modo});
                 if (!d.nome) { alert('Escreva o nome do pictograma.'); pic.nome.focus(); return; }
-                if (d.tipo === 'perigo' && !nomesTabela().includes(d.nome)) { alert(`"${d.nome}" não está na tabela de perigos. Escolha um nome da lista.`); pic.nome.focus(); return; }
               }
               const b = ev.currentTarget; b.disabled = true; b.textContent = 'Aprovando…';
               try {

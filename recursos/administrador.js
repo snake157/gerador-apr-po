@@ -167,7 +167,7 @@ const ADMIN = (() => {
     let nova = null;
     const imgEl = p.img ? el('img', {src: p.img, alt: ''}) : div('vazio', 'Nenhuma imagem');
     const caixa = div('adm-editor', imgEl, div('campos',
-      el('span', {class: 'env-rot'}, aba === 'perigos' ? 'Nome (da tabela de perigos)' : 'Nome do EPI'), nome, dl,
+      el('span', {class: 'env-rot'}, aba === 'perigos' ? 'Nome do perigo' : 'Nome do EPI'), nome, dl,
       div('env-linha',
         el('button', {class: 'btn', onclick: () => arq.click()}, p.img ? 'Trocar imagem' : 'Escolher imagem'),
         el('button', {class: 'btn primario', onclick: () => okPicto(nome.value, nova)}, 'OK'),
@@ -191,9 +191,7 @@ const ADMIN = (() => {
     if (!nome) { alert('Escreva o nome do pictograma.'); return; }
     if (/[\\/:*?"<>|[\]]/.test(nome)) { alert('O nome não pode ter \\ / : * ? " < > | [ ]'); return; }
     if (lista.some((x, k) => k !== editando && x.nome === nome)) { alert(`Já existe um pictograma "${nome}". Use outro nome (ex.: "${nome} (2)").`); return; }
-    if (aba === 'perigos' && nome !== p._orig && !nomesTab().includes(nome.replace(variacao, ''))) {
-      alert(`"${nome.replace(variacao, '')}" não está na tabela de perigos. Escolha um nome da lista (pode terminar com " (2)", " (3)"...).`); return;
-    }
+    // 08/11/2026: pictograma de perigo pode ter nome fora da tabela de perigos (a lista só sugere)
     if (!p.img && !nova) { alert('Escolha a imagem do pictograma.'); return; }
     if (nome === p.nome && !nova) { cancelarEdicao(); return; }
     p.nome = nome;
