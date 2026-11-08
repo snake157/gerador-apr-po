@@ -192,7 +192,7 @@ async function planilhaDaTabela(bytes, linhas) {
   return gravarZip(arqs);
 }
 const textoTabelaJs = linhas => '// Tabela de Perigos e Riscos da APR (perigo, risco / consequência e potencial de dano).\n' +
-  `// Gravada pelo gerador online (${new Date().toLocaleDateString('pt-BR', { timeZone: 'America/Sao_Paulo' })}): Menu > ADMINISTRADOR ou APROVAR ENVIOS.\n` +
+  `// Gravada pelo gerador online (${new Date().toLocaleDateString('pt-BR', { timeZone: 'America/Sao_Paulo' })}): Menu > ADMINISTRADOR.\n` +
   'window.TABELA_PERIGOS = ' + JSON.stringify(linhas.map(l => ({ perigo: l.perigo, risco: l.risco, pd: l.pd }))) + ';\n';
 // nomes antigos -> novos (APRs e POs antigos passam para o nome novo ao abrir); também atualiza quem apontava para o nome antigo
 function colocarRenomeados(texto, variavel, mapa) {

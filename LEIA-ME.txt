@@ -321,10 +321,13 @@ SUMÁRIO
 ==================================================================================================
 - Vêm das pastas Gerador de PO\Pictogramas\Perigos e Gerador de PO\Pictogramas\EPIs.
 - Incluir ou mudar pictogramas e perigos (07/11/2026, vale para todos que usam o gerador):
-  Menu > "ENVIAR PICTOGRAMA" ou "ENVIAR PERIGO": qualquer pessoa envia (só escreve o nome); fica aguardando.
-  Menu > "APROVAR ENVIOS" (senha de aprovador): aprova (pode mudar tipo, nome, PD; SUBSTITUIR ou NOVO) ou recusa.
-  Menu > "ADMINISTRADOR" (senha de aprovador): inclui, edita e exclui perigos da tabela (Perigo, Risco, PD) e
-  pictogramas de perigo e de EPI; nada é gravado até "SALVAR ALTERAÇÕES". Todos veem em cerca de 1 minuto.
+  Menu > "INCLUIR PERIGO / PICTOGRAMA" (abas PERIGO e PICTOGRAMA): qualquer pessoa envia (só escreve o nome);
+  fica aguardando aprovação.
+  Menu > "ADMINISTRADOR" (senha de aprovador; o botão vermelho "SAIR" ao lado esquece a senha neste computador):
+  - aba "APROVAR ENVIOS": aprova (pode mudar tipo, nome, PD; SUBSTITUIR ou NOVO) ou recusa. Passe o mouse no
+    pictograma pequeno de "JÁ EXISTE" para ver o atual maior.
+  - abas "PERIGOS E RISCOS", "PICTOGRAMAS DE PERIGO" e "PICTOGRAMAS DE EPI": inclui, edita e exclui; nada é
+    gravado até "SALVAR ALTERAÇÕES". Todos veem em cerca de 1 minuto.
   A biblioteca usada é a Pictogramas\biblioteca.js.
   (07/11/2026, gerador mais leve: o modelo da APR em Excel e o treino de pictogramas só são carregados quando
   usados; na tela, pictogramas grandes (ex.: vindos de um Word importado) aparecem numa cópia de 500 px, e o PDF,
