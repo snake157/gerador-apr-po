@@ -329,7 +329,7 @@ textarea{resize:vertical}
 .janela.ajuste-fotos{height:auto;width:min(400px,94vw);padding:14px;gap:12px;box-shadow:0 8px 24px rgba(0,0,0,.25)}
 .ajuste-fotos b{letter-spacing:.04em;text-align:center}
 .ajuste-fotos .op{display:flex;align-items:center;gap:6px;font-size:12px;text-transform:uppercase;letter-spacing:.03em}
-.ajuste-fotos .op span{flex:1}
+.ajuste-fotos .op > span:not(.spin){flex:1}
 .ajuste-fotos .op input[type=number],.ajuste-fotos .op input.num{width:64px;text-align:center;font-variant-numeric:tabular-nums}
 .ajuste-fotos .dica,.ajuste-fotos .resumo,.ajuste-fotos .legenda{text-align:center;text-transform:uppercase;letter-spacing:.03em;margin:0}
 .ajuste-fotos .resumo{font-weight:700;font-size:12.5px}
@@ -530,6 +530,14 @@ body.col-anim #previa{overflow-x:hidden}   /* a prévia já tem o tamanho final:
 .janela .janela-bts{display:grid;grid-auto-flow:column;grid-auto-columns:minmax(0,1fr);gap:8px;padding:10px 12px;border-top:1px solid var(--ui-borda)}
 #modal .janela .btn{box-sizing:border-box;min-height:32px;text-transform:uppercase;letter-spacing:.02em;text-align:center}
 #modal .janela header input[type=text],#modal .janela input[type=number],#modal .janela input.num{box-sizing:border-box;height:32px}
+/* setas ▲ ▼ ao lado dos campos de medida (09/11/2026) */
+.spin{display:inline-flex;align-items:stretch;flex:none}
+.spin input.num{border-top-right-radius:0;border-bottom-right-radius:0}
+.spin .spin-bts{display:flex;flex-direction:column;width:18px}
+.spin .spin-bts button{flex:1;display:flex;align-items:center;justify-content:center;margin:0;padding:0;border:1px solid var(--ui-borda);border-left:0;background:#f3f4f6;color:#374151;font-size:7px;line-height:1;cursor:pointer;min-width:0;height:auto}
+.spin .spin-bts button:first-child{border-top-right-radius:5px}
+.spin .spin-bts button:last-child{border-top:0;border-bottom-right-radius:5px}
+.spin .spin-bts button:hover{background:#e5e7eb}
 .janela.ajuste-fotos .janela-bts,.janela.editor-foto .janela-bts{padding:0;border:0}
 .janela.editor-foto .janela-bts{padding:10px 12px;border-top:1px solid var(--ui-borda)}
 /* 16: janela de pendências com a altura do conteúdo */
@@ -705,6 +713,32 @@ function esperarImagens(raiz) {
     Promise.all([...raiz.querySelectorAll('img')].map(i => i.decode ? i.decode().catch(() => {}) : null)),
     new Promise(ok => setTimeout(ok, 4000)),
   ]);
+}
+// campo de medida com vírgula + setas: teclas ↑ ↓ (0,1; com Shift 1) e botões ▲ ▼ (segurar repete) (09/11/2026)
+function campoSetas(inp, min, max) {
+  const passo = (d, grande) => {
+    const v = +String(inp.value).replace(',', '.');
+    const x = (isNaN(v) ? min : v) * 10, k = grande ? 10 : 1;   // anda na grade de 0,1 (3,98 ▼ = 3,9)
+    let n = ((d > 0 ? Math.floor(x + 1e-6) : Math.ceil(x - 1e-6)) + d * k) / 10;
+    n = Math.min(max, Math.max(min, Math.round(n * 100) / 100));
+    inp.value = String(+n.toFixed(2)).replace('.', ',');
+    inp.dispatchEvent(new Event('change'));
+  };
+  inp.addEventListener('keydown', e => {
+    if (e.key !== 'ArrowUp' && e.key !== 'ArrowDown') return;
+    e.preventDefault(); passo(e.key === 'ArrowUp' ? 1 : -1, e.shiftKey);
+  });
+  let tempo = null;
+  const parar = () => { clearTimeout(tempo); tempo = null; };
+  const bt = (d, txt, tit) => el('button', {type: 'button', tabindex: '-1', title: tit,
+    onpointerdown: e => {
+      e.preventDefault(); inp.focus(); passo(d, e.shiftKey);
+      const rep = espera => { tempo = setTimeout(() => { passo(d, false); rep(70); }, espera); };
+      parar(); rep(400);
+    },
+    onpointerup: parar, onpointerleave: parar, onpointercancel: parar,
+    onkeydown: e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); passo(d, false); } }}, txt);
+  return el('span', {class: 'spin'}, inp, el('span', {class: 'spin-bts'}, bt(1, '▲', 'Aumentar 0,1 cm'), bt(-1, '▼', 'Diminuir 0,1 cm')));
 }
 function el(tag, props, ...filhos) {
   const e = document.createElement(tag);
@@ -1295,8 +1329,8 @@ function abrirAjusteFotos() {
   m.replaceChildren(el('div', {class: 'janela ajuste-fotos', onclick: e => e.stopPropagation()},
     el('b', {}, 'AJUSTAR FOTOS'),
     el('label', {class: 'op'}, chk, el('span', {}, 'Refazer as ajustadas à mão')),
-    el('div', {class: 'op'}, el('span', {}, 'Foto individual (cm)'), iL, '×', iA),
-    el('div', {class: 'op'}, el('span', {}, 'Lado a lado (cm)'), lL, '×', lA),
+    el('div', {class: 'op'}, el('span', {}, 'Foto individual (cm)'), campoSetas(iL, 1, 8.1), '×', campoSetas(iA, 1, 15.3)),
+    el('div', {class: 'op'}, el('span', {}, 'Lado a lado (cm)'), campoSetas(lL, 1, 3.98), '×', campoSetas(lA, 1, 15.3)),
     el('div', {class: 'dica'}, 'Máximo: individual 8,1 × 15,3 · lado a lado 3,98 × 15,3 · corte pelo centro'),
     resumo,
     el('div', {class: 'legenda'}, el('span', {style: '--c:#15803d'}, 'Ajustada'), el('span', {style: '--c:#d97706'}, 'Mantida')),
@@ -2020,7 +2054,7 @@ function editarFoto(f, lim = FOTO_MAX) {
     // painel DESENHAR / MELHORAR FOTO em toda a altura da janela; foto e botões ficam à esquerda dele (05/11/2026)
     el('div', {class: 'meio-foto'}, el('div', {class: 'col-foto'}, palco,
     el('div', {class: 'controles'},
-      el('div', {class: 'medidas'}, el('label', {}, `Largura (cm, máx. ${virg(LMAX)}) `, inpL), el('label', {}, `Altura (cm, máx. ${virg(AMAX)}) `, inpA)),
+      el('div', {class: 'medidas'}, el('label', {}, `Largura (cm, máx. ${virg(LMAX)}) `, campoSetas(inpL, 1, LMAX)), el('label', {}, `Altura (cm, máx. ${virg(AMAX)}) `, campoSetas(inpA, 1, AMAX))),
       el('div', {class: 'linha-bt'}, presets),
       el('div', {class: 'linha-bt'},
         el('button', {class: 'btn', title: 'Corte do tamanho da foto inteira', onclick: () => { fotoInteira(); if (anexo) automatico = !f.largura; desenhar(); }}, anexo ? 'Imagem inteira' : 'Foto inteira'),
