@@ -79,8 +79,6 @@ const ATUALIZAR_BIB = (() => {
     try {
       const {bib, erros} = await montar(raiz, aviso);
       await gravar(raiz, bib);
-      // pictogramas aprendidos com as trocas no editor também vão para a pasta (valem em outros computadores)
-      if (typeof APRENDIDOS !== 'undefined' && APRENDIDOS.total()) { try { await APRENDIDOS.gravarArquivo(raiz); } catch (e) { console.warn(e); } }
       rascunho.salvar(raiz, 'pastaPictogramas');   // lembra a pasta para a próxima vez
       // passa a valer já, sem recarregar a página
       Object.assign(BIB, bib);

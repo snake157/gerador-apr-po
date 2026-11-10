@@ -284,7 +284,7 @@ SUMÁRIO
     comparados com a biblioteca pela imagem (e pelo nome escrito na célula); o que não tiver certeza fica com a
     imagem original do Word (com o nome escrito nela). Esses ficam com a marca amarela "conferir" no editor. Para
     trocar, clique no pictograma no painel de edição e escolha um da biblioteca (vale para Perigos, EPI's
-    específicos e EPI's básicos). O gerador APRENDE a troca (veja o item 9).
+    específicos e EPI's básicos). A troca vale só para o documento (aprendizado congelado, item 9).
   . Ele também já vem treinado com os 70 POs da Villares, os 155 da JSL e os 108 da pasta "Antigos" de
     "Treinamento do Gerador" (recursos\pictos_treino.js): as imagens desses POs saem com o pictograma certo e com
     o nome que está escrito na imagem. EPIs recortados de um quadro com vários EPIs (recorte do Word) também são
@@ -332,10 +332,9 @@ SUMÁRIO
   (07/11/2026, gerador mais leve: o modelo da APR em Excel e o treino de pictogramas só são carregados quando
   usados; na tela, pictogramas grandes (ex.: vindos de um Word importado) aparecem numa cópia de 500 px, e o PDF,
   o Word e o Excel continuam com o original.)
-- PICTOGRAMAS APRENDIDOS: cada troca de pictograma numa imagem não reconhecida é gravada na hora no arquivo
-  Pictogramas\aprendidos.js (vale também em outros computadores que usam a mesma pasta). Na primeira vez o
-  gerador pede para escolher a pasta "Pictogramas" (ou para permitir gravar nela) e depois lembra. "AGORA NÃO"
-  deixa o aprendido só no navegador até a próxima troca. Apagar o aprendidos.js esquece tudo.
+- PICTOGRAMAS APRENDIDOS (congelado em 10/11/2026): o gerador continua reconhecendo as imagens que já tinha
+  aprendido (Pictogramas\aprendidos.js e o treino), mas não aprende mais trocas novas e não pede mais a pasta
+  "Pictogramas". Assim o padrão é o mesmo para todos que usam o gerador online.
 
 ==================================================================================================
 10. DESFAZER / REFAZER
@@ -353,7 +352,7 @@ SUMÁRIO
 11. PASTAS
 ==================================================================================================
 - Pictogramas: imagens dos perigos e EPIs, a biblioteca (biblioteca.js) usada pelo gerador e os pictogramas
-  aprendidos (aprendidos.js).
+  aprendidos (aprendidos.js, congelado).
 - Manual do Gerador.html: o manual com fotos (as fotos ficam em recursos\manual).
 - recursos: arquivos de funcionamento do gerador (não mexer). O modelo da APR em Excel fica dentro de
   recursos\modelo_apr.js.

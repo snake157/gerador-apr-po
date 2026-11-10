@@ -1,7 +1,10 @@
 // Pictogramas aprendidos: quando você troca uma imagem não reconhecida (trazida de um Word ou Excel antigo)
 // pelo pictograma certo da biblioteca, o gerador guarda a "assinatura" daquela imagem com o nome escolhido.
-// Na próxima importação a mesma imagem já vem com o nome. Fica guardado no navegador e no arquivo
-// Pictogramas\aprendidos.js (para valer em outros computadores que usam a mesma pasta).
+// Na próxima importação a mesma imagem já vem com o nome.
+// CONGELADO (10/11/2026, pedido do usuário): com o gerador online e usado por várias pessoas, o gerador não aprende
+// mais trocas novas (cada um preferindo um pictograma ia ficar mudando o padrão) e não pede mais a pasta Pictogramas.
+// Continua usando o que já estava aprendido: Pictogramas\aprendidos.js, o treino (recursos\pictos_treino.js) e as
+// trocas já guardadas neste navegador antes do congelamento.
 'use strict';
 
 const APRENDIDOS = (() => {
@@ -20,8 +23,7 @@ const APRENDIDOS = (() => {
     for (let i = 0; i < s.length; i++) { h ^= s.charCodeAt(i); h = Math.imul(h, 0x01000193) >>> 0; }
     return s.length.toString(36) + '-' + h.toString(36);
   }
-  // assinatura (Float32Array normalizada) <-> texto compacto (1 byte por ponto)
-  const comprimir = v => { let b = ''; for (const x of v) b += String.fromCharCode(Math.max(0, Math.min(255, Math.round(x * 32 + 128)))); return btoa(b); };
+  // assinatura (texto compacto, 1 byte por ponto) -> Float32Array normalizada
   const expandir = s => { const b = atob(s), v = new Float32Array(b.length); for (let i = 0; i < b.length; i++) v[i] = (b.charCodeAt(i) - 128) / 32; return v; };
   const nomesDe = tipo => new Set((tipo === 'perigo' ? BIB.perigos : listaEpis()).map(x => x.nome));
 
@@ -93,52 +95,7 @@ const APRENDIDOS = (() => {
     return null;
   }
 
-  const paraGravar = () => lista.map(({_v, ...x}) => x);
-  async function gravarArquivo(raiz) {
-    const h = await raiz.getFileHandle('aprendidos.js', {create: true});
-    const w = await h.createWritable();
-    await w.write('// Pictogramas aprendidos pelo gerador (trocas feitas em imagens não reconhecidas). Pode apagar para esquecer tudo.\n' +
-      'window.PICTOS_APRENDIDOS = ' + JSON.stringify(paraGravar()) + ';\n');
-    await w.close();
-  }
-  // grava no arquivo Pictogramas\aprendidos.js a cada troca (pedido do usuário, 21/10/2026): usa a pasta Pictogramas
-  // já lembrada (pede a permissão do navegador, se precisar); sem ela, pergunta uma vez e pede para escolher a pasta.
-  // "AGORA NÃO" vale até fechar a página (o aprendido fica no navegador e vai para o arquivo na próxima troca).
-  let recusou = false;
-  const ehPastaPictogramas = async d => { for (const n of ['Perigos', 'EPIs']) { try { await d.getDirectoryHandle(n); return true; } catch (e) {} } return false; };
-  async function gravarSePuder() {
-    try {
-      let raiz = await rascunho.ler('pastaPictogramas');
-      if (raiz) {
-        let p = await raiz.queryPermission({mode: 'readwrite'});
-        if (p !== 'granted') { try { p = await raiz.requestPermission({mode: 'readwrite'}); } catch (e) { /* sem o clique: pergunta abaixo */ } }
-        if (p === 'granted') { await gravarArquivo(raiz); return; }
-      }
-      if (recusou || !window.showDirectoryPicker || typeof perguntar !== 'function') return;
-      const sim = await perguntar('O gerador aprendeu esta troca de pictograma. Para guardar no arquivo Pictogramas\\aprendidos.js (e valer também em outros computadores), ' +
-        (raiz ? 'permita gravar na pasta Pictogramas.' : 'escolha a pasta "Pictogramas" do gerador na próxima janela.'),
-        {sim: raiz ? 'PERMITIR' : 'ESCOLHER A PASTA', nao: 'AGORA NÃO', titulo: 'PICTOGRAMAS APRENDIDOS'});
-      if (!sim) { recusou = true; return; }
-      if (raiz && (await raiz.requestPermission({mode: 'readwrite'})) === 'granted') { await gravarArquivo(raiz); return; }
-      raiz = await window.showDirectoryPicker({id: 'pictogramas', mode: 'readwrite'});
-      if (!(await ehPastaPictogramas(raiz))) { avisar('Essa pasta não é a "Pictogramas" do gerador (a que tem as pastas Perigos e EPIs). O aprendido ficou só no navegador por enquanto.'); return; }
-      await rascunho.salvar(raiz, 'pastaPictogramas');
-      await gravarArquivo(raiz);
-      aviso('Pictogramas aprendidos gravados em Pictogramas\\aprendidos.js.');
-    } catch (e) { if (e.name !== 'AbortError') console.warn('aprendidos.js não gravado:', e); }
-  }
-
-  // troca feita no editor: imagem original (src) -> pictograma escolhido (nome)
-  async function aprender(tipo, src, nome) {
-    if (!src || !nome || !/^data:image\//.test(src)) return;
-    await pronto;
-    const h = hash(src);
-    let a = null;
-    try { const v = await IMPORTAR.ajuda.assinatura(src, false); if (v) a = comprimir(v); } catch (e) {}
-    lista = lista.filter(x => !(x.tipo === tipo && x.h === h));
-    lista.push({tipo, nome, h, a});
-    await rascunho.salvar(paraGravar(), CHAVE);
-    await gravarSePuder();
-  }
-  return {buscar, aprender, gravarArquivo, total: () => lista.length};
+  // troca feita no editor: congelado, não aprende mais nem grava nada (10/11/2026)
+  async function aprender() {}
+  return {buscar, aprender, total: () => lista.length};
 })();
