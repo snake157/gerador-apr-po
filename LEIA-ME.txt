@@ -94,6 +94,10 @@ SUMÁRIO
   . "MELHORAR TEXTO" (só com o Gemini): reescreve as frases para ficarem mais claras e diretas, sem tirar
     nenhuma instrução, sem enfraquecer proibições e obrigações ("É proibido", "Não", "somente"). É rápido; se não
     gostar, "REFAZER PENSANDO" manda de novo com o modo pensar (mais lento, uns 5 a 20 segundos, e mais caprichado).
+    A janela abre com o campo "PEDIDO AO GEMINI (OPCIONAL)": escreva como quer o texto (ex.: "Deixe o texto mais
+    objetivo e reduza o tamanho dele em 20%") e clique em MELHORAR (ou Enter). Campo vazio = melhoria padrão.
+    Os atalhos MAIS OBJETIVO, REDUZIR 20%, LINGUAGEM SIMPLES e MAIS DETALHADO só preenchem o campo. Depois da
+    resposta dá para mudar o pedido e clicar em REFAZER; em cima aparece o tamanho antes e depois (letras e %).
   . Padrão de pontuação aplicado nos dois botões (com ou sem internet): cada item termina com ";" e o último
     item da etapa com "."; item que abre uma sublista mantém ":"; linha sem marcador (que não é a última) não muda.
   . O Gemini recebe a etapa inteira (nome, nível de cada item e qual é o último). Os dois botões usam o Gemini

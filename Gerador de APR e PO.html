@@ -579,6 +579,17 @@ body.col-anim #previa{overflow-x:hidden}   /* a prévia já tem o tamanho final:
 .config-revisor .linha-2{display:grid;grid-template-columns:1fr 1fr;gap:8px}
 .config-revisor .dica{margin:0}
 .rev-quem{text-align:center;font-size:12px;color:var(--ui-suave)}
+/* pedido livre ao Gemini no MELHORAR TEXTO (10/11/2026, exemplo aprovado) */
+.rev-pedido{margin:10px 12px 0;border:1px solid var(--azul);background:#eef3fb;border-radius:6px;padding:8px 10px;display:grid;gap:6px}
+.rev-pedido label>span{display:block;font:700 12px Arial,Helvetica,sans-serif;text-transform:uppercase;letter-spacing:.03em;color:var(--azul);margin-bottom:4px;text-align:center}
+.rev-pedido textarea{box-sizing:border-box;width:100%;min-height:52px;max-height:140px;resize:vertical;border:1px solid var(--ui-borda);border-radius:5px;padding:6px 8px;font:13px/1.4 Arial,Helvetica,sans-serif;background:#fff;color:var(--ui-texto)}
+.rev-atalhos{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px}
+.rev-atalhos .btn{box-sizing:border-box;height:28px;padding:0 4px;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.02em;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.rev-pedido-dica{font-size:11.5px;color:var(--ui-suave);text-align:center}
+.rev-original{display:grid;gap:4px}
+.rev-original>b{font-size:11.5px;color:var(--ui-suave);text-transform:uppercase;text-align:center}
+.rev-original>div{font-size:12.5px;line-height:1.5;border:1px solid var(--ui-borda);border-radius:4px;padding:4px 6px;background:#fafafa}
+.rev-tam{font-weight:700;color:#15803d}
 .rev-aviso{margin-top:4px;font-size:11.5px;color:#b45309;font-weight:600}
 .rev-aviso.leve{color:#6b7280;font-weight:400}
 .rev-item.com-aviso{border-color:#f59e0b}
@@ -2533,9 +2544,11 @@ const REV_PEDIDOS = {
     'Proibições e obrigações continuam com a mesma força: mantenha "É proibido ...", "Proibido ...", "Não ...", "É obrigatório ...", "somente"/"apenas"; nunca troque por "Evitar", "Proibir ...", "Recomenda-se" ou algo mais fraco. Item que diz quem pode fazer algo (ex.: "só deve ser operado por pessoa treinada") mantém essa forma, sem forçar o infinitivo. Termos técnicos e regionais do PO (ex.: raspa, vaqueta, comboio, agulheiro) ficam como estão. '
 };
 // texto enviado ao Gemini: a etapa inteira, com nível, marcador e qual é o último item
-function pedidoRevisor(modo, e, linhas) {
+// extra = pedido livre escrito pela pessoa no MELHORAR TEXTO (10/11/2026); as regras de segurança e o formato continuam valendo
+function pedidoRevisor(modo, e, linhas, extra = '') {
+  const pedidoPessoa = !extra ? '' : 'Pedido da pessoa para esta revisão (siga este pedido; ele vale mais que o estilo descrito acima, mas não tire nenhuma instrução, cuidado ou medida de segurança, mantenha proibições e obrigações com a mesma força e siga o padrão do PO e o formato da resposta): ' + JSON.stringify(extra) + '. ';
   const itens = linhas.map((l, k) => `${k + 1}. [nível ${l.n}${l.m === 'nenhum' ? ', sem marcador' : ''}${k === linhas.length - 1 ? ', ÚLTIMO' : ''}] ${JSON.stringify(l.html)}`);
-  return REV_PEDIDOS[modo] + REV_REGRAS + '\n\n' + REV_EXEMPLOS[modo] + '\n\nEtapa: ' + JSON.stringify(e.nome || '') + '\nEntrada:\n' + itens.join('\n');
+  return REV_PEDIDOS[modo] + pedidoPessoa + REV_REGRAS + '\n\n' + REV_EXEMPLOS[modo] + '\n\nEtapa: ' + JSON.stringify(e.nome || '') + '\nEntrada:\n' + itens.join('\n');
 }
 // garante o padrão de pontuação no fim de cada item (vale também para o modo sem internet)
 function pontuarItens(htmls, linhas) {
@@ -2789,13 +2802,29 @@ async function revisarDescricao(e, modo) {
   const bAceitar = el('button', {class: 'btn primario', disabled: true}, 'Aceitar');
   const bDescartar = el('button', {class: 'btn', onclick: fechar}, 'Descartar');
   const bPensar = !chave ? null : el('button', {class: 'btn', disabled: true, title: 'Manda o texto de novo para o Gemini com o modo pensar: mais lento, revisão mais caprichada'}, 'Refazer pensando');
+  // MELHORAR TEXTO com o Gemini (10/11/2026): a janela abre com o campo do pedido e espera MELHORAR (ou Enter);
+  // campo vazio = melhoria padrão; depois da resposta, REFAZER manda de novo com o pedido que estiver no campo
+  const comPedido = !corrigir && !!chave;
+  const campoPedido = comPedido ? el('textarea', {placeholder: 'Ex.: Deixe o texto mais objetivo e reduza o tamanho dele em 20%'}) : null;
+  const ATALHOS = [['Mais objetivo', 'Deixe o texto mais objetivo e direto.'], ['Reduzir 20%', 'Reduza o tamanho do texto em 20%.'],
+    ['Linguagem simples', 'Use linguagem simples, fácil para o operador entender.'], ['Mais detalhado', 'Detalhe melhor como fazer cada passo, sem inventar informação.']];
+  const blocoPedido = !comPedido ? null : el('div', {class: 'rev-pedido'},
+    el('label', {}, el('span', {}, 'Pedido ao Gemini (opcional)'), campoPedido),
+    el('div', {class: 'rev-atalhos'}, ...ATALHOS.map(([r, t]) => el('button', {type: 'button', class: 'btn', title: t,
+      onclick: () => { const v = campoPedido.value.trim(); campoPedido.value = v ? v + ' ' + t : t; campoPedido.focus(); }}, r))),
+    el('div', {class: 'rev-pedido-dica'}, 'Os atalhos só preenchem o campo. Enter envia; Shift+Enter pula linha.'));
+  const bMelhorar = comPedido ? el('button', {class: 'btn primario'}, 'Melhorar') : null;
+  const bRefazer = comPedido ? el('button', {class: 'btn', disabled: true, title: 'Manda o texto de novo para o Gemini com o pedido que está no campo'}, 'Refazer') : null;
+  const pedidoAtual = () => campoPedido ? campoPedido.value.trim() : '';
   m.replaceChildren(el('div', {class: 'janela revisor', onclick: ev => ev.stopPropagation()},
     el('header', {}, el('b', {class: 'quebra'}, titulo + (e.nome ? ' · ' + e.nome : '')), sub),
+    blocoPedido,
     corpo,
-    el('div', {class: 'janela-bts'}, bDescartar, bPensar, bAceitar)));
+    el('div', {class: 'janela-bts'}, bDescartar, bMelhorar, bRefazer, bPensar, bAceitar)));
   m.onclick = fechar;
   m.hidden = false;
-  const carregando = txt => { corpo.replaceChildren(el('div', {class: 'rev-carregando'}, el('div', {class: 'rev-giro'}), txt)); bAceitar.disabled = true; if (bPensar) bPensar.disabled = true; };
+  const carregando = txt => { corpo.replaceChildren(el('div', {class: 'rev-carregando'}, el('div', {class: 'rev-giro'}), txt)); bAceitar.disabled = true; if (bPensar) bPensar.disabled = true; if (bRefazer) bRefazer.disabled = true; };
+  const liberar = () => { if (bPensar) bPensar.disabled = false; if (bRefazer) bRefazer.disabled = false; };
   // mostra cada linha antes e depois; nota = aviso no alto (modo sem internet)
   // avisos[k] = {bloquear: [...], conferir: [...]} (bloquear = linha vem desmarcada; conferir = só alerta)
   const mostrar = (novas, nota, quem, avisos = []) => {
@@ -2818,7 +2847,7 @@ async function revisarDescricao(e, modo) {
         el('div', {class: 'rev-quem'}, 'Revisado por: ', el('b', {}, quem)),
         el('p', {class: 'apr-ok'}, '✓ Nenhum erro encontrado.'));
       bAceitar.disabled = false; bAceitar.dataset.fechar = '1';
-      if (bPensar) bPensar.disabled = false;
+      liberar();
       bAceitar.focus();
       return;
     }
@@ -2827,7 +2856,12 @@ async function revisarDescricao(e, modo) {
       nota ? el('div', {class: 'rev-nota'}, nota) : '',
       el('div', {class: 'rev-quem'}, 'Revisado por: ', el('b', {}, quem)),
       el('div', {class: 'rev-legenda'}, el('span', {}, el('del', {}, 'riscado'), ' sai'), el('span', {}, el('ins', {}, 'verde'), ' entra'),
-        el('span', {}, nMud ? `${nMud} de ${itens.length} linha${itens.length > 1 ? 's' : ''} com alteração` : 'Nenhuma alteração sugerida')),
+        el('span', {}, nMud ? `${nMud} de ${itens.length} linha${itens.length > 1 ? 's' : ''} com alteração` : 'Nenhuma alteração sugerida'),
+        corrigir ? '' : (() => {   // tamanho do texto antes e depois (10/11/2026), útil para pedidos como "reduza 20%"
+          const a = itens.reduce((s, t) => s + textoPuro(t.l.html).length, 0), b = itens.reduce((s, t) => s + textoPuro(t.html).length, 0);
+          const pc = a ? Math.round((b - a) / a * 100) : 0;
+          return el('span', {class: 'rev-tam'}, `Tamanho: ${a} → ${b} letras (${pc > 0 ? '+' : pc < 0 ? '−' : ''}${Math.abs(pc)}%)`);
+        })()),
       el('div', {class: 'rev-cab'}, el('span', {}, 'Usar'), el('span', {}, 'Antes'), el('span', {}, 'Depois')));
     // linhas com alteração (ou aviso) primeiro; as sem alteração ficam recolhidas embaixo (07/11/2026)
     const linhasRev = itens.map((t, k) => {
@@ -2849,7 +2883,7 @@ async function revisarDescricao(e, modo) {
     if (iguais.length) corpo.append(el('details', {class: 'rev-iguais'},
       el('summary', {}, `${iguais.length} linha${iguais.length > 1 ? 's' : ''} sem alteração`), ...iguais));
     bAceitar.disabled = !nMud;
-    if (bPensar) bPensar.disabled = false;
+    liberar();
     if (nMud) bAceitar.focus();
   };
   const semInternet = async nota => {
@@ -2860,11 +2894,14 @@ async function revisarDescricao(e, modo) {
   };
   const comGemini = async tipo => {
     const meu = ++pedido;
+    const extra = pedidoAtual();
+    if (bMelhorar) { bMelhorar.hidden = true; bRefazer.hidden = bPensar.hidden = bAceitar.hidden = false; }
     sub.textContent = (corrigir ? 'Ortografia, acentos, concordância e pontuação (itens com ; e o último com .). O sentido não muda.'
+      : extra ? 'Texto reescrito conforme o seu pedido (itens com ; e o último com .).'
       : 'Frases reescritas para ficarem mais claras e diretas (itens com ; e o último com .).') + (tipo === 'pensar' ? ' Feito com o modo pensar.' : '');
     carregando(tipo === 'pensar' ? 'Revisando com o modo pensar (pode levar até 20 segundos)…' : 'Revisando o texto com o Gemini…');
     try {
-      const pedidoTxt = pedidoRevisor(modo, e, linhas), chaveCache = modo + '|' + tipo + '|' + pedidoTxt;
+      const pedidoTxt = pedidoRevisor(modo, e, linhas, extra), chaveCache = modo + '|' + tipo + '|' + pedidoTxt;
       let novas, quem;
       if (tipo !== 'pensar' && REV_CACHE.has(chaveCache)) { ({novas, quem} = REV_CACHE.get(chaveCache)); quem = quem.replace(/ · [\d,]+ s$/, '') + ' · já revisado antes'; }
       else {
@@ -2877,6 +2914,7 @@ async function revisarDescricao(e, modo) {
         REV_CACHE.set(chaveCache, {novas, quem});
       }
       const avisos = linhas.map((l, k) => ({bloquear: conferirResposta(textoPuro(l.html), textoPuro(novas[k] || ''), corrigir)}));
+      if (extra) quem += ' · com o seu pedido';
       if (!fechada && meu === pedido) mostrar(novas, '', quem, avisos);
     } catch (err) {
       if (fechada || meu !== pedido) return;
@@ -2884,10 +2922,14 @@ async function revisarDescricao(e, modo) {
       if (corrigir) return semInternet('Gemini indisponível: ' + mensagemErroRevisor(err) + ' Feita só a correção de ortografia, com o dicionário do gerador.');
       corpo.replaceChildren(el('p', {class: 'rev-erro'}, mensagemErroRevisor(err)),
         el('div', {class: 'linha-2'}, el('button', {class: 'btn', onclick: () => revisarDescricao(e, 'corrigir')}, 'Só ortografia')));
-      if (bPensar) bPensar.disabled = false;
+      liberar();
     }
   };
   if (bPensar) bPensar.onclick = () => comGemini('pensar');
+  if (comPedido) {
+    bMelhorar.onclick = bRefazer.onclick = () => comGemini('rapido');
+    campoPedido.addEventListener('keydown', ev => { if (ev.key === 'Enter' && !ev.shiftKey) { ev.preventDefault(); if (!bMelhorar.hidden || !bRefazer.disabled) comGemini('rapido'); } });
+  }
   bAceitar.onclick = () => {
     if (bAceitar.dataset.fechar) { fechar(); return; }
     let n = 0;
@@ -2898,7 +2940,13 @@ async function revisarDescricao(e, modo) {
     mudou(true);
     aviso(`${n} linha${n > 1 ? 's atualizadas' : ' atualizada'}. Ctrl+Z desfaz.`);
   };
-  if (chave) comGemini(corrigir ? 'preciso' : 'rapido');
+  if (comPedido) {   // espera o pedido: mostra o texto atual da etapa
+    bRefazer.hidden = bPensar.hidden = bAceitar.hidden = true;
+    sub.textContent = 'Escreva como quer o texto ou deixe em branco para a melhoria padrão.';
+    corpo.replaceChildren(el('div', {class: 'rev-original'}, el('b', {}, 'Texto atual'), ...linhas.map(l => el('div', {}, textoPuro(l.html)))));
+    campoPedido.focus();
+  }
+  else if (chave) comGemini(corrigir ? 'preciso' : 'rapido');
   else semInternet('Correção só de ortografia. Para corrigir a gramática (concordância, crase, pontuação), configure o Gemini em Menu > Configurar Gemini.');
 }
 function configurarRevisor() {
